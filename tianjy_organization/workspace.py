@@ -7,6 +7,7 @@ from pypika import Order
 import frappe
 from frappe import _
 from frappe.desk.desktop import Workspace
+from frappe.query_builder.functions import Coalesce
 from frappe.query_builder.utils import DocType
 from . import get_user_organizations
 
@@ -39,8 +40,8 @@ def get_pages(user: str, has_access = False, is_admin = False):
 			blocked_modules = frappe.get_doc("User", user).get_blocked_modules()
 			blocked_modules.append("Dummy Module")
 			where = (
-				Workspace.restrict_to_domain.isin(frappe.get_active_domains())
-				& Workspace.module.notin(blocked_modules)
+				Coalesce(Workspace.restrict_to_domain, '').isin(frappe.get_active_domains())
+				& Coalesce(Workspace.module, '').notin(blocked_modules)
 				& where
 			)
 		query = query.where(where)
