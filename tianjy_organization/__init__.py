@@ -269,7 +269,7 @@ def has_permission(doc: Document, ptype, user, organization_field = 'organizatio
 
 
 @frappe.whitelist()
-def visible():
+def viewable():
 	if "System Manager" in frappe.get_roles():
 		return frappe.get_all(
 			TianjyOrganization.DOCTYPE,
@@ -278,7 +278,7 @@ def visible():
 		)
 	return frappe.get_all(
 		TianjyOrganization.DOCTYPE,
-		filters=dict(name=('in', get_user_organizations())),
+		filters=dict(name=('in', get_user_organizations(type="viewable"))),
 		fields=["name", "parent_organization as parent", "label"],
 		order_by="lft"
 	)

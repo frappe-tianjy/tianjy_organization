@@ -31,8 +31,9 @@ def get_pages(user: str, has_access = False, is_admin = False):
 
 	if not is_admin:
 		# TODO: 可以进一步精细控制
-		where = (OrganizationWorkspace.organization.isnull()
-				| OrganizationWorkspace.organization.isin(get_user_organizations(user, "viewable")))
+		where = OrganizationWorkspace.organization.isnull()
+		if user_organizations := get_user_organizations(user, "viewable"):
+			where = where | OrganizationWorkspace.organization.isin(user_organizations)
 
 		if not has_access:
 			blocked_modules = frappe.get_doc("User", user).get_blocked_modules()
