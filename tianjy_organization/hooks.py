@@ -8,6 +8,7 @@ app_email = "天玑 Tinajy"
 app_license = "MIT"
 
 
+app_include_css="/assets/tianjy_organization/css/tianjy_organization.css"
 app_include_js="tianjy_organization.bundle.js"
 permission_query_conditions = {
 	"Tianjy Organization": "tianjy_organization.lib.get_organization_permission_query_conditions",

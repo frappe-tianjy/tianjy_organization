@@ -1,0 +1,41 @@
+.tianjy-organization-list ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	line-height: 28px;
+}
+.tianjy-organization-list li {
+	padding-inline-start: 20px;
+	position: relative;
+}
+.tianjy-organization-list-tree-folder {
+	position: absolute;
+	inset-inline-start: 0;
+	inset-block-start: 4px;
+	inline-size: 20px;
+	block-size: 20px;
+	cursor: pointer;
+	transform:rotate(90deg);
+	transition: transform .2s;
+}
+.tianjy-organization-list-tree-folder::after {
+	content: '';
+	border: 1px solid transparent;
+	inline-size: 6px;
+	block-size: 6px;
+	border-block-end-color: currentColor;
+	border-inline-end-color: currentColor;
+	transform-origin: center;
+	position: absolute;
+	transform:rotate(-45deg);
+	inset: 0;
+	margin: auto;
+	margin-inline-start: 4px;
+}
+.tianjy-organization-list-tree-folded > .tianjy-organization-list-tree-folder {
+	transform: none;
+
+}
+.tianjy-organization-list-tree-folded > ul {
+	display: none;
+}

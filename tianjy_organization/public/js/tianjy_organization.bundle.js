@@ -1,3 +1,4 @@
+import './selector';
 const { prototype } = frappe.views.Workspace;
 const old_append_item = prototype.append_item;
 prototype.append_item = function append_item(item, container) {

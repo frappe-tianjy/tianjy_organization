@@ -9,6 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import cint
 from frappe.query_builder.utils import DocType
 
+from .tianjy_organization.doctype.tianjy_organization.tianjy_organization import TianjyOrganization
 from .tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member import TianjyOrganizationMember
 from .tianjy_organization.doctype.tianjy_organization_role.tianjy_organization_role import TianjyOrganizationRole
 
@@ -117,6 +118,7 @@ def get_permission_query_conditions(
 	获取列表查询条件
 	"""
 	user = _get_user(user)
+	if user == 'Administrator': return
 
 	doctype_roles = frappe.permissions.get_doctype_roles(doctype)
 
@@ -264,3 +266,19 @@ def has_permission(doc: Document, ptype, user, organization_field = 'organizatio
 		is_owner,
 		'create',
 	): return False
+
+
+@frappe.whitelist()
+def visible():
+	if "System Manager" in frappe.get_roles():
+		return frappe.get_all(
+			TianjyOrganization.DOCTYPE,
+			fields=["name", "parent_organization as parent", "label"],
+			order_by="lft",
+		)
+	return frappe.get_all(
+		TianjyOrganization.DOCTYPE,
+		filters=dict(name=('in', get_user_organizations())),
+		fields=["name", "parent_organization as parent", "label"],
+		order_by="lft"
+	)
