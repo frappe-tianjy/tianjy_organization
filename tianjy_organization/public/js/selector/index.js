@@ -4,7 +4,26 @@ import createTree from './tree';
 const { Toolbar } = frappe.ui.toolbar;
 
 const old_make = Toolbar.prototype.make;
-function addProjectSelect() {
+
+
+async function getOrganizationName() {
+	const organization = frappe.defaults.get_user_default('Tianjy Organization');
+	if (!organization) { return; }
+	try {
+		const { message } = await frappe.call('frappe.desk.search.get_link_title', {
+			doctype: 'Tianjy Organization',
+			docname: organization,
+		});
+		if (message && typeof message === 'string') {
+			return message;
+		}
+	} catch {
+
+	}
+	return organization;
+}
+
+async function addProjectSelect() {
 	const ul = document.querySelector('header .navbar-nav:last-child');
 	if (!ul) { return; }
 	const li = document.createElement('li');
@@ -15,10 +34,13 @@ function addProjectSelect() {
 
 
 	const btn = li.appendChild(document.createElement('a'));
+	li.classList.add('nav-item');
 	btn.className = 'nav-list text-muted';
+
 	btn.href = '#';
 	btn.title = __('Switch Organization');
-	btn.appendChild(document.createTextNode(__('Organization')));
+	const organizationName = await getOrganizationName() || __('Select Organization');
+	btn.appendChild(document.createTextNode(organizationName));
 	btn.addEventListener('click', e => {
 		e.preventDefault();
 		const dialog = new frappe.ui.Dialog({

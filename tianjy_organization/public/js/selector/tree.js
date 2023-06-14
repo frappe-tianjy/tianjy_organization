@@ -12,18 +12,22 @@ import setOrganization from './setOrganization';
 /**
  *
  * @param {TreeNode} node
+ * @param {string} [organization]
  */
-export function createDom(node) {
-	const { children } = node;
+export function createDom(node, organization) {
+	const { children, name } = node;
 	if (!children?.length) {
 		const head = document.createElement('li');
 		// TODO: 展开/收起 占位符
 		const title = head.appendChild(document.createElement('a'));
 		title.appendChild(document.createTextNode(node.label));
 		title.href = '#';
+		if (name === organization) {
+			title.classList.add('tianjy-organization-list-current');
+		}
 		title.addEventListener('click', e => {
 			e.preventDefault();
-			setOrganization(node.name);
+			setOrganization(name);
 		});
 
 		return head;
@@ -40,14 +44,17 @@ export function createDom(node) {
 	const title = head.appendChild(document.createElement('a'));
 	title.appendChild(document.createTextNode(node.label));
 	title.href = '#';
+	if (name === organization) {
+		title.classList.add('tianjy-organization-list-current');
+	}
 	title.addEventListener('click', e => {
 		e.preventDefault();
-		setOrganization(node.name);
+		setOrganization(name);
 	});
 
 	const ul = root.appendChild(document.createElement('ul'));
 	for (const child of children) {
-		ul.appendChild(createDom(child));
+		ul.appendChild(createDom(child, organization));
 	}
 	return root;
 }
@@ -56,6 +63,9 @@ export function createDom(node) {
  * @param {TreeNode[]} list
  */
 export default function createTree(list) {
+
+	/** @type {string | undefined} */
+	const organization = frappe.defaults.get_user_default('Tianjy Organization');
 	/** @type {Map<string, TreeNode[]>} */
 	const map = new Map();
 	for (const node of list) {
@@ -73,7 +83,7 @@ export default function createTree(list) {
 
 	const ul = document.createElement('ul');
 	for (const node of root) {
-		ul.appendChild(createDom(node));
+		ul.appendChild(createDom(node, organization));
 	}
 	return ul;
 }
