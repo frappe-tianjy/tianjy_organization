@@ -17,7 +17,8 @@
   "lft",
   "rgt",
   "is_group",
-  "section_break_yofnl"
+  "section_break_yofnl",
+  "work_space"
  ],
  "fields": [
   {
@@ -79,6 +80,12 @@
    "hidden": 1,
    "label": "Old parent",
    "options": "Tianjy Organization"
+  },
+  {
+   "fieldname": "work_space",
+   "fieldtype": "Connection Table",
+   "label": "Work Space",
+   "options": "Tianjy Organization Workspace"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -87,10 +94,14 @@
   {
    "link_doctype": "Tianjy Organization Member",
    "link_fieldname": "organization"
+  },
+  {
+   "link_doctype": "Tianjy Organization Workspace",
+   "link_fieldname": "organization"
   }
  ],
  "make_attachments_public": 1,
- "modified": "2023-05-19 10:52:25.659099",
+ "modified": "2023-06-15 09:53:19.500904",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization",
