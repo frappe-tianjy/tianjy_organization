@@ -12,22 +12,27 @@ from ....config.organization_types import types
 
 type_list: list[str] = [t.name for t in types if t.visible_to_descendants]
 
+
 @frappe.whitelist()
-def get_types(type = ''):
-	# TODO: 从独立的列表中读取
-	return [dict(
-		name=type.name,
-		parent_types=[type.type for type in type.parent_types],
-		leader_types=[type.type for type in type.leader_types],
-		root_only=bool(type.root_only)
-	) for type in types]
+def get_types(type=''):
+    # TODO: 从独立的列表中读取
+    return [dict(
+            name=type.name,
+            parent_types=[type.type for type in type.parent_types],
+            leader_types=[type.type for type in type.leader_types],
+            root_only=bool(type.root_only)
+            ) for type in types]
 
 
 class TianjyOrganization(NestedSet):
-	DOCTYPE="Tianjy Organization"
-	@classmethod
-	def find(cls, name: str) -> 'TianjyOrganization | None':
-		try:
-			return frappe.get_doc(cls.DOCTYPE, name)
-		except:
-			return
+    DOCTYPE = "Tianjy Organization"
+
+    @classmethod
+    def find(cls, name: str) -> 'TianjyOrganization | None':
+        try:
+            return frappe.get_doc(cls.DOCTYPE, name)
+        except:
+            return
+
+    def on_trash(self, allow_root_deletion=False):
+        return super().on_trash(True)
