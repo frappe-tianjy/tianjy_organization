@@ -26,7 +26,26 @@ export default async function setOrganization(tianjy_organization) {
 			message: __('Session Defaults Saved'),
 			indicator: 'green',
 		});
-		frappe.ui.toolbar.clear_cache();
+		frappe.assets.clear_local_storage();
+		Promise.all([
+			tianjy_organization ? frappe.call('tianjy_organization.lib.get_default_workspace', {
+				organization: tianjy_organization,
+			}).then(v => v?.message) : '',
+			frappe.xcall('frappe.sessions.clear').then(message => {
+				frappe.show_alert({
+					message,
+					indicator: 'info',
+				});
+			}),
+		]).then(([workspace]) => {
+			if (!workspace) {
+				location.reload();
+				return;
+			}
+			location.href = `/app/${encodeURIComponent(workspace)}`;
+		}, () => {
+			location.reload();
+		});
 	} else {
 		frappe.show_alert({
 			message: __('An error occurred while setting Session Defaults'),
