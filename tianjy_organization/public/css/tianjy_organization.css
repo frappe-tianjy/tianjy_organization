@@ -1,3 +1,8 @@
+.tianjy-organization-list {
+	max-height: calc(100vh - 200px);
+	overflow-y: auto;
+}
+
 .tianjy-organization-list ul {
 	list-style: none;
 	padding: 0;
