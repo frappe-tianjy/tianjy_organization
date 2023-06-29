@@ -43,11 +43,15 @@ function setParentOrganization(frm) {
 	if (!current) {
 		frm.set_df_property('parent_organization', 'hidden', true);
 		frm.set_df_property('parent_organization', 'reqd', true);
+		frm.set_value('parent_organization', null);
 		return;
 	}
 	const rootOnly = !current.parent_types.length;
 	frm.set_df_property('parent_organization', 'hidden', rootOnly);
 	frm.set_df_property('parent_organization', 'reqd', !rootOnly && !current.root_only);
+	if (rootOnly) {
+		frm.set_value('parent_organization', null);
+	}
 }
 
 
