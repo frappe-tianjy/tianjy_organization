@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 # import frappe
+from frappe.cache_manager import clear_user_cache
 from frappe.utils.nestedset import NestedSet
 
 from typing import Any
@@ -34,9 +35,14 @@ class TianjyOrganization(NestedSet):
 		except:
 			return
 
+
 	def on_trash(self, allow_root_deletion=False):
+		return super().on_trash(True)
+
+
+	def after_delete(self):
 		frappe.db.delete("DefaultValue", dict(
 			defkey='tianjy_organization',
 			defvalue=self.name
 		))
-		return super().on_trash(True)
+		clear_user_cache()

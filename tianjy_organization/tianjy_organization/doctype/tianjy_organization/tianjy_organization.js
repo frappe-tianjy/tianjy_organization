@@ -34,6 +34,10 @@ function getCurrentType(frm) {
 	return types.find((t) => t.name === type);
 }
 function setParentOrganization(frm) {
+	if (frm.is_new()) {
+		frm.set_value('old_parent', null);
+	}
+	if (!frm.__types) { return; }
 	frm.set_query('parent_organization', function () {
 		return {
 			filters: [['type', "in", getCurrentType(frm)?.parent_types || []]]
