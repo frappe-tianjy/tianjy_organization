@@ -101,7 +101,7 @@
   }
  ],
  "make_attachments_public": 1,
- "modified": "2023-06-24 10:10:17.844645",
+ "modified": "2023-07-11 09:20:25.227269",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization",
@@ -158,8 +158,8 @@
   }
  ],
  "show_title_field_in_link": 1,
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "lft",
+ "sort_order": "ASC",
  "states": [],
  "title_field": "label"
 }
