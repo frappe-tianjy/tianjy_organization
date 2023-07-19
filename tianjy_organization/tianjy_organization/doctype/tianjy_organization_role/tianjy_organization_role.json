@@ -1,7 +1,6 @@
 {
  "actions": [],
  "allow_import": 1,
- "allow_rename": 1,
  "creation": "2023-05-19 10:00:49.305970",
  "default_view": "List",
  "doctype": "DocType",
@@ -47,7 +46,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2023-05-19 10:52:09.514998",
+ "modified": "2023-07-19 08:36:32.740395",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization Role",
@@ -64,6 +63,33 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guigu Pc Sub Company Department Member",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guigu Pc Sub Company Department Manager",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guigu Project Mebmer",
+   "share": 1
   }
  ],
  "sort_field": "modified",
