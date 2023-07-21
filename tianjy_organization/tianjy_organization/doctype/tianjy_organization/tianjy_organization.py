@@ -8,22 +8,20 @@ from frappe.utils.nestedset import NestedSet
 from typing import Any
 import frappe
 from frappe.utils.nestedset import NestedSet
-from ....config.organization_types import types
 
+from ..tianjy_organization_type.tianjy_organization_type import TianjyOrganizationType
 
-type_list: list[str] = [t.name for t in types if t.visible_to_descendants]
 
 
 @frappe.whitelist()
-def get_types(type=''):
-	# TODO: 从独立的列表中读取
-	return [dict(
-			name=type.name,
-			parent_types=[type.type for type in type.parent_types],
-			leader_types=[type.type for type in type.leader_types],
-			root_only=bool(type.root_only)
-			) for type in types]
-
+def get_type(type = ''):
+	type = frappe.get_doc(TianjyOrganizationType.DOCTYPE, type)
+	return dict(
+		name=type.name,
+		parent_types=[type.type for type in type.parent_types],
+		doc_types=[type.doc_type for type in type.doc_types],
+		root_only=bool(type.root_only),
+	)
 
 class TianjyOrganization(NestedSet):
 	DOCTYPE = "Tianjy Organization"
@@ -38,6 +36,7 @@ class TianjyOrganization(NestedSet):
 
 	def on_trash(self, allow_root_deletion=False):
 		return super().on_trash(True)
+		# TODO: 删除成员信息
 
 
 	def after_delete(self):

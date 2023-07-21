@@ -15,73 +15,70 @@ from .tianjy_organization.doctype.tianjy_organization_role.tianjy_organization_r
 
 
 def _get_user(user: str | None = None) -> str:
-	return user or frappe.session.user
+	return user or frappe.session.user # type: ignore
 
 member_type = Literal['visible', 'viewable', 'updatable', 'addible', 'editable', 'deletable', 'manageable']
 viewable_type = Literal['viewable', 'updatable', 'addible', 'editable', 'deletable']
 
-def member_type_Sql_where(type: member_type) -> str:
+def member_type_sql_where(type: member_type) -> str:
 	if type == 'updatable':
-		return 'viewable = 1 AND (addible = 1 OR editable = 1)'
+		return '(addible = 1 OR editable = 1)'
 	if type in ['viewable', 'addible', 'editable', 'deletable', 'manageable']:
 		return f'{type} = 1'
 	return 'visible = 1'
 
+def member_type_qb_where(type: member_type) -> str:
+	Table = DocType(TianjyOrganizationMember.DOCTYPE)
+	if type == 'updatable':
+		return (Table.addible == 1) | (Table.editable == 1)
+	if type in ['viewable', 'addible', 'editable', 'deletable', 'manageable']:
+		return Table[type] == 1
+	return Table.visible == 1
+
 def organization_members_sql(organization: str, type: member_type = 'visible') -> str:
+	"""获取在指定组织内有指定类型的用户的SQL语句"""
 	sql = f'SELECT DISTINCT user FROM `tab{TianjyOrganizationMember.DOCTYPE}`'
-	sql = f'{sql} WHERE organization={frappe.db.escape(organization, percent=False)} AND {member_type_Sql_where(type)}'
+	sql = f'{sql} WHERE organization={frappe.db.escape(organization, percent=False)} AND {member_type_sql_where(type)}'
 	return sql
 
 def user_organizations_sql(user = None, type: member_type = 'visible') -> str:
+	"""获取在指定用户有指定类型的组织的SQL语句"""
 	sql = f'SELECT DISTINCT organization FROM `tab{TianjyOrganizationMember.DOCTYPE}`'
-	sql = f'{sql} WHERE user={frappe.db.escape(_get_user(user), percent=False)} AND {member_type_Sql_where(type)}'
+	sql = f'{sql} WHERE user={frappe.db.escape(_get_user(user), percent=False)} AND {member_type_sql_where(type)}'
 	return sql
 
 
 
 def get_user_organizations(user = None, type: member_type = 'visible') -> list[str]:
-	"""
-	获取用户在拥有特定权限的组织
-	"""
+	"""获取用户在拥有特定权限的组织"""
 	return [v[0] for v in frappe.db.sql(user_organizations_sql(user, type))]
 
 def get_organization_members(organization:str, type: member_type = 'visible') -> list[str]:
-	"""
-	获取组织中拥有特定权限的用户
-	"""
+	"""获取组织中拥有特定权限的用户"""
 	return [v[0] for v in frappe.db.sql(organization_members_sql(organization, type))]
 
 
 
 def get_roles(organization: str, user=None, type: viewable_type = 'viewable') -> list[str] | None:
-	"""
-	获取用户在某组织内的角色，如果用户在组织内相关权限时，则返回 None 而非数组
-	"""
+	"""获取用户在某组织内的角色，如果用户在组织内无相关权限时，则返回 None 而非数组"""
 	if not organization: return
 	if not isinstance(organization, str): return
-	user = _get_user(user)
-	filters = {
-		"organization": organization,
-		"user": user,
-		type if type in ['addible', 'editable', 'deletable'] else 'viewable': 1,
-	}
-	or_filters = None
-	if type == 'updatable':
-		or_filters = {
-			'addible': 1,
-			'editable': 1,
-		}
+
 	members = frappe.get_all(
 		TianjyOrganizationMember.DOCTYPE,
-		filters = filters,
-		or_filters = or_filters,
-		fields=['organization', 'copy_from']
+		filters = {
+			"organization": organization,
+			"user": _get_user(user),
+			type if type in ['addible', 'editable', 'deletable'] else 'viewable': 1,
+		},
+		or_filters = dict(addible=1,editable=1) if type == 'updatable' else None,
+		fields=['organization', 'inherit_from']
 	);
 
 
 	if not members: return
 
-	organizations = [m['copy_from'] or m['organization'] for m in members]
+	organizations = [m['inherit_from'] or m['organization'] for m in members]
 
 	return list(set(frappe.get_all(TianjyOrganizationRole.DOCTYPE, filters={
 		'user': user,
@@ -89,7 +86,12 @@ def get_roles(organization: str, user=None, type: viewable_type = 'viewable') ->
 	}, pluck="role")))
 
 
-def get_user_organizations_by_role(role: str | list[str], user = None) -> list[str]:
+def get_user_organizations_by_role(
+	role: str | list[str],
+	user = None,
+	type: member_type = 'viewable',
+) -> list[str]:
+	"""获取用户拥有特定角色的组织列表"""
 	user = _get_user(user)
 	organizations = frappe.get_all(TianjyOrganizationRole.DOCTYPE, filters={
 		"user": user,
@@ -97,45 +99,66 @@ def get_user_organizations_by_role(role: str | list[str], user = None) -> list[s
 	}, pluck="organization")
 	if not organizations: return []
 	Table = DocType(TianjyOrganizationMember.DOCTYPE)
-	return (frappe.qb.from_(Table)
-  			.select(Table.organization)
-		.where(
-		(Table.user == user) & (Table.viewable == 1) & (
-			(Table.copy_from.isin(organizations)) |
-			(Table.organization.isin(organizations) & (Table.copy_from.isnull()))
+	q = frappe.qb.from_(Table)
+	q = q.select(Table.organization)
+	q = q.where(
+		(Table.user == user) & member_type_qb_where(type) & (
+			(Table.inherit_from.isin(organizations)) |
+			Table.organization.isin(organizations)
 		)
-	)).run(pluck=True)
+	)
+	return q.run(pluck=True)
 
 
 
+def get_user_organizations_by_doctype_permission(
+	doctype: str,
+	user: str | None = None,
+) -> list[str]:
+	"""获取当前用户在特定 DocType 内有权限的组织列表"""
+	doctype_roles = frappe.permissions.get_doctype_roles(doctype)
+	return get_user_organizations_by_role(doctype_roles, user)
 
 def get_permission_query_conditions(
-		doctype: str,
-		user: str | None = None,
-		organization_field: str = 'organization'
-	):
+	doctype: str,
+	user: str | None = None,
+	organization_field: str = 'organization'
+):
 	"""
 	获取列表查询条件
+	e.g.
+
+	### Test Doctype 自定义的 get_permission_query_conditions 函数
+	```python
+	import tianjy_organization
+	def get_permission_query_conditions(user):
+		# 注意指明 doctype 参数为当前 doctype
+		return tianjy_organization.get_permission_query_conditions('Test Doctype', user, 'organization')
+	```
+	### hooks.py 文件定义钩子
+
+	```python
+	permission_query_conditions = {
+		## 使用上面自定义的钩子
+		"Test Doctype": ".....get_permission_query_conditions",
+	}
+	```
 	"""
 	user = _get_user(user)
 	if user == 'Administrator': return
 
-	doctype_roles = frappe.permissions.get_doctype_roles(doctype)
-
-	organizations = set(get_user_organizations_by_role(doctype_roles, user))
+	organizations = set(get_user_organizations_by_doctype_permission(doctype, user))
 	if not organizations: return "1 = 0"
 
-	list = ', '.join([frappe.db.escape(o, percent=False) for o in organizations])
-	return f"`tab{doctype}`.`{organization_field}` in ({list})"
+	values = ', '.join([frappe.db.escape(o, percent=False) for o in organizations])
+	return f"`tab{doctype}`.`{organization_field}` in ({values})"
 
-def get_permission_query_conditions_visible(
-		doctype: str,
-		user: str | None = None,
-		organization_field: str = 'organization'
-	):
-	"""
-	获取列表查询条件
-	"""
+def get_visible_query_conditions(
+	doctype: str,
+	user: str | None = None,
+	organization_field: str = 'organization'
+):
+	"""获取列表查询条件"""
 	return f"`tab{doctype}`.`{organization_field}` in ({user_organizations_sql(user)})"
 
 

@@ -16,7 +16,11 @@
   "lft",
   "rgt",
   "is_group",
-  "section_break_yofnl",
+  "docmenut_section",
+  "doc_type",
+  "column_break_ho7w2",
+  "document",
+  "section_break_3mqrm",
   "work_space"
  ],
  "fields": [
@@ -31,9 +35,11 @@
   },
   {
    "fieldname": "type",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Type",
+   "options": "Tianjy Organization Type",
+   "reqd": 1,
    "set_only_once": 1
   },
   {
@@ -70,10 +76,6 @@
    "label": "Is Group"
   },
   {
-   "fieldname": "section_break_yofnl",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "old_parent",
    "fieldtype": "Link",
    "hidden": 1,
@@ -85,22 +87,59 @@
    "fieldtype": "Connection Table",
    "label": "Work Space",
    "options": "Tianjy Organization Workspace"
+  },
+  {
+   "fieldname": "doc_type",
+   "fieldtype": "Link",
+   "label": "\u5173\u8054\u7c7b\u578b",
+   "options": "DocType"
+},
+{
+ "depends_on": "eval:doc.doc_type",
+ "fieldname": "document",
+ "fieldtype": "Dynamic Link",
+ "label": "\u5173\u8054\u6587\u6863",
+ "options": "doc_type"
+  },
+  {
+   "fieldname": "section_break_3mqrm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_ho7w2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "docmenut_section",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [
   {
+   "group": "\u5173\u8054",
    "link_doctype": "Tianjy Organization Member",
    "link_fieldname": "organization"
   },
   {
+   "group": "\u5173\u8054",
    "link_doctype": "Tianjy Organization Workspace",
    "link_fieldname": "organization"
+  },
+  {
+   "group": "\u5173\u8054",
+   "link_doctype": "Tianjy Organization Inheritable",
+   "link_fieldname": "organization"
+  },
+  {
+   "group": "\u7ee7\u627f",
+   "link_doctype": "Tianjy Organization Inheritable",
+   "link_fieldname": "inherit_from"
   }
  ],
  "make_attachments_public": 1,
- "modified": "2023-07-19 08:30:54.645722",
+ "modified": "2023-07-21 16:37:27.761117",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization",

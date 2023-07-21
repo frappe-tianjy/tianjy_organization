@@ -6,6 +6,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.query_builder.utils import DocType
 
+from ..tianjy_organization_inheritable.tianjy_organization_inheritable import TianjyOrganizationInheritable
 from ..tianjy_organization_role.tianjy_organization_role import TianjyOrganizationRole
 
 @frappe.whitelist()
@@ -55,39 +56,77 @@ def get_all_roles():
 	)
 
 
+def inheritable_on_update(inheritable, method):
+	inherit_from = inheritable.inherit_from
+	organization = inheritable.organization
+
+	frappe.db.delete(TianjyOrganizationMember.DOCTYPE, filters=dict(
+		organization=organization,
+		inherit_from=inherit_from
+	));
+
+	members = frappe.get_all(
+		TianjyOrganizationMember.DOCTYPE,
+		fields=['visible', 'viewable', 'addible', 'editable', 'deletable', 'manageable', 'user'],
+		filters=dict(organization=inherit_from, inherit_from=inherit_from)
+	)
+	if not members: return
+	visible = inheritable.visible
+	viewable = inheritable.viewable
+	addible = inheritable.addible
+	editable = inheritable.editable
+	deletable = inheritable.deletable
+	manageable = inheritable.manageable
+
+	Table = DocType(TianjyOrganizationMember.DOCTYPE)
+	insert_qb = frappe.qb.into(Table)
+	insert_qb = insert_qb.columns(
+		'name', 'user', 'organization', 'inherit_from', 'is_inherit',
+		'visible', 'viewable', 'addible', 'editable', 'deletable', 'manageable'
+	)
+	for member in members:
+		user = member['user']
+		name = f'{inherit_from}:{organization}/{user}'
+		insert_qb = insert_qb.insert(
+			name, user, organization, inherit_from, 1,
+			1 if visible and member['visible'] else 0,
+			1 if viewable and member['viewable'] else 0,
+			1 if addible and member['addible'] else 0,
+			1 if editable and member['editable'] else 0,
+			1 if deletable and member['deletable'] else 0,
+			1 if manageable and member['manageable'] else 0,
+		)
+	insert_qb.run()
+
+def inheritable_on_trash(inheritable, method):
+	frappe.db.delete(TianjyOrganizationMember.DOCTYPE, filters=dict(
+		organization=inheritable.organization,
+		inherit_from=inheritable.inherit_from
+	));
+
 class TianjyOrganizationMember(Document):
 	DOCTYPE="Tianjy Organization Member"
 	@classmethod
 	def find(cls, user, organization) -> 'TianjyOrganizationMember | None':
 		try:
-			return frappe.get_last_doc(cls.DOCTYPE, filters=dict(user=user,organization=organization))
+			return frappe.get_last_doc(cls.DOCTYPE, filters=dict(
+				user=user,
+				organization=organization,
+				inherit_from=organization,
+			)) # type: ignore
 		except frappe.exceptions.DoesNotExistError:
 			return None
 
 	def before_validate(self):
-		user = self.user
-		copy_from_organization = self.copy_from
-		if not copy_from_organization: return
-		if copy_from_organization == self.organization:
-			return frappe.throw('不能从自身复制')
-		copy_from = TianjyOrganizationMember.find(user, copy_from_organization)
-		if not copy_from:
-			return frappe.throw('当前用户未在对应复制组织中配置权限')
-		if copy_from.copy_from:
-			return frappe.throw('不支持从其他被复制项复制')
-
-		if not self.copy_roles_only:
-			self.visible = copy_from.visible
-			self.viewable = copy_from.viewable
-			self.addible = copy_from.addible
-			self.editable = copy_from.editable
-			self.deletable = copy_from.deletable
-
-		if frappe.get_all(self.DOCTYPE, filters={'user': user, 'copy_from': self.organization}, page_length=1):
-			return frappe.throw('存在复制自此项的配置，无法将此项设置为复制')
+		if self.is_new():
+			self.inherit_from = self.organization # type: ignore
+			self.is_inherit = 0
+	def validate(self):
+		if self.inherit_from != self.organization: # type: ignore
+			return frappe.throw('无法修改通过继承的配置')
 
 	def before_save(self):
-		viewable = self.viewable
+		viewable = self.viewable # type: ignore
 		if viewable:
 			self.visible = viewable
 		else:
@@ -96,14 +135,52 @@ class TianjyOrganizationMember(Document):
 			self.deletable = viewable
 	def on_update(self):
 		Table = DocType(self.DOCTYPE)
-		(frappe.qb.update(Table)
-			.set(Table.visible, self.visible)
-			.set(Table.viewable, self.viewable)
-			.set(Table.addible, self.addible)
-			.set(Table.editable, self.editable)
-			.set(Table.deletable, self.deletable)
-			.where((Table.copy_from == self.organization) & (Table.copy_roles_only == 0))
-		).run()
+		user = self.user # type: ignore
+		inherit_from = self.organization # type: ignore
+		frappe.db.delete(self.DOCTYPE, filters=dict(
+			user=user,
+			inherit_from=inherit_from,
+			organization=('!=', inherit_from),
+		));
+
+
+		organizations = frappe.get_all(
+			TianjyOrganizationInheritable.DOCTYPE,
+			fields=['visible', 'viewable', 'addible', 'editable', 'deletable', 'manageable', 'organization'],
+			filters=dict(inherit_from=inherit_from)
+		)
+		if not organizations: return
+
+		visible = self.visible
+		viewable = self.viewable # type: ignore
+		addible = self.addible
+		editable = self.editable
+		deletable = self.deletable
+		manageable = self.manageable # type: ignore
+
+		insert_qb = frappe.qb.into(Table)
+		insert_qb = insert_qb.columns(
+			'name', 'user', 'organization', 'inherit_from', 'is_inherit',
+			'visible', 'viewable', 'addible', 'editable', 'deletable', 'manageable'
+		)
+		for inheritable in organizations:
+			organization = inheritable['organization']
+			name = f'{inherit_from}:{organization}/{user}'
+			insert_qb = insert_qb.insert(
+				name, user, organization, inherit_from, 1,
+				1 if visible and inheritable['visible'] else 0,
+				1 if viewable and inheritable['viewable'] else 0,
+				1 if addible and inheritable['addible'] else 0,
+				1 if editable and inheritable['editable'] else 0,
+				1 if deletable and inheritable['deletable'] else 0,
+				1 if manageable and inheritable['manageable'] else 0,
+			)
+		insert_qb.run()
+
+
 
 	def on_trash(self, allow_root_deletion=False):
-		frappe.db.delete(self.DOCTYPE, filters={ 'copy_from': self.organization, 'synchronous_deletion': 1 });
+		frappe.db.delete(self.DOCTYPE, filters=dict(
+			inherit_from=self.organization, # type: ignore
+			user=self.user, # type: ignore
+		));

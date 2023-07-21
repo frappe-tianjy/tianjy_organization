@@ -1,0 +1,119 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "format:{inherit_from}:{organization}",
+ "creation": "2023-07-21 09:45:37.589018",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "organization",
+  "column_break_kwt3g",
+  "inherit_from",
+  "section_break_dp9gv",
+  "visible",
+  "viewable",
+  "addible",
+  "editable",
+  "deletable",
+  "manageable"
+ ],
+ "fields": [
+  {
+   "fieldname": "organization",
+   "fieldtype": "Link",
+   "label": "Organization",
+   "options": "Tianjy Organization",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_kwt3g",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inherit_from",
+   "fieldtype": "Link",
+   "label": "Inherit From",
+   "options": "Tianjy Organization",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_break_dp9gv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "visible",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Visible"
+  },
+  {
+   "default": "0",
+   "fieldname": "viewable",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Viewable"
+  },
+  {
+   "default": "0",
+   "fieldname": "addible",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Addible"
+  },
+  {
+   "default": "0",
+   "fieldname": "editable",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Editable"
+  },
+  {
+   "default": "0",
+   "fieldname": "deletable",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Deletable"
+  },
+  {
+   "default": "0",
+   "fieldname": "manageable",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Manageable"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "make_attachments_public": 1,
+ "modified": "2023-07-21 15:31:42.625832",
+ "modified_by": "Administrator",
+ "module": "Tianjy Organization",
+ "name": "Tianjy Organization Inheritable",
+ "naming_rule": "Expression",
+ "nsm_parent_field": "parent_organization",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tianjy Organization Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "states": []
+}

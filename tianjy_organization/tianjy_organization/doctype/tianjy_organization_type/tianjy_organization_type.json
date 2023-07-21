@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "autoname": "prompt",
+ "creation": "2023-07-19 16:42:00.241222",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "root_only",
+  "parent_types",
+  "doc_types"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "root_only",
+   "fieldtype": "Check",
+   "label": "Root Only"
+  },
+  {
+   "fieldname": "parent_types",
+   "fieldtype": "Table",
+   "label": "Parent Types",
+   "options": "Tianjy Organization Type List"
+  },
+  {
+   "fieldname": "doc_types",
+   "fieldtype": "Table",
+   "label": "Doc Types",
+   "options": "Tianjy Organization DocType List"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-07-20 09:42:30.787762",
+ "modified_by": "Administrator",
+ "module": "Tianjy Organization",
+ "name": "Tianjy Organization Type",
+ "name_case": "Title Case",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

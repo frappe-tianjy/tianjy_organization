@@ -115,7 +115,18 @@ frappe.ui.form.on('Tianjy Organization Member', {
 		const doc = frm.doc;
 		createEditor(doc.user, doc.organization);
 	},
-	// refresh: function(frm) {
-
-	// }
+	refresh(frm) {
+		const { doc, meta } = frm;
+		const disabled = !frm.is_new() && doc.organization !== doc.inherit_from;
+		if (disabled) {
+			frm.set_intro('此项目权限配置由系统自动生成，禁止手动修改');
+			frm.disable_save();
+		} else {
+			frm.enable_save();
+		}
+		for (const field of meta.fields) {
+			if (field.read_only || field.set_only_once || field.read_only_depends_on) { continue; }
+			frm.set_df_property(field.fieldname, 'read_only', disabled);
+		}
+	}
 });
