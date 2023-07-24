@@ -1,7 +1,7 @@
 
 __version__ = '0.0.1'
 
-from typing import Literal
+from typing import Any, Literal
 
 import frappe
 import frappe.permissions
@@ -59,15 +59,19 @@ def get_organization_members(organization:str, type: member_type = 'visible') ->
 
 
 
-def get_roles(organization: str, user=None, type: viewable_type = 'viewable') -> list[str] | None:
+def get_roles(
+	organization: str | list[str] | set[str],
+	user=None,
+	type: viewable_type = 'viewable'
+) -> list[str] | None:
 	"""获取用户在某组织内的角色，如果用户在组织内无相关权限时，则返回 None 而非数组"""
 	if not organization: return
-	if not isinstance(organization, str): return
+	if not isinstance(organization, str) and not isinstance(organization, list) and not isinstance(organization, set): return
 
 	members = frappe.get_all(
 		TianjyOrganizationMember.DOCTYPE,
 		filters = {
-			"organization": organization,
+			"organization": organization if isinstance(organization, str) else ('in', list(organization)),
 			"user": _get_user(user),
 			type if type in ['addible', 'editable', 'deletable'] else 'viewable': 1,
 		},
@@ -85,6 +89,17 @@ def get_roles(organization: str, user=None, type: viewable_type = 'viewable') ->
 		'organization': ('in', organizations),
 	}, pluck="role")))
 
+
+def get_bind_organizations(doc_type: str, doc_name: str | list[str]) -> list[str]:
+	if not doc_name: return []
+	Table = DocType(TianjyOrganization.DOCTYPE)
+	q = frappe.qb.from_(Table)
+	q = q.select('name')
+	q = q.where(
+		(Table.document == doc_name if isinstance(doc_name, str) else Table.document.isin(doc_name))
+		& (Table.doc_type == doc_type)
+	)
+	return q.run(pluck=True)
 
 def get_user_organizations_by_role(
 	role: str | list[str],
@@ -119,10 +134,27 @@ def get_user_organizations_by_doctype_permission(
 	doctype_roles = frappe.permissions.get_doctype_roles(doctype)
 	return get_user_organizations_by_role(doctype_roles, user)
 
+
+def get_user_organization_docs_by_doctype_permission(
+	doctype: str,
+	doc_type: str,
+	user: str | None = None,
+) -> list[str]:
+	"""获取当前用户在特定 DocType 内有权限的组织列表"""
+	Table = DocType(TianjyOrganization.DOCTYPE)
+	q = frappe.qb.from_(Table)
+	q = q.select('document')
+	q = q.where(
+		Table.name.isin(get_user_organizations_by_doctype_permission(doctype, user))
+		& (Table.doc_type == doc_type)
+	)
+	return q.run(pluck=True)
+
 def get_permission_query_conditions(
 	doctype: str,
 	user: str | None = None,
-	organization_field: str = 'organization'
+	field: str = 'organization',
+	doc_type: str | None = None,
 ):
 	"""
 	获取列表查询条件
@@ -147,11 +179,14 @@ def get_permission_query_conditions(
 	user = _get_user(user)
 	if user == 'Administrator': return
 
-	organizations = set(get_user_organizations_by_doctype_permission(doctype, user))
-	if not organizations: return "1 = 0"
+	values = set(
+		get_user_organization_docs_by_doctype_permission(doctype, doc_type, user) if doc_type
+		else get_user_organizations_by_doctype_permission(doctype, user)
+	)
+	if not values: return "1 = 0"
 
-	values = ', '.join([frappe.db.escape(o, percent=False) for o in organizations])
-	return f"`tab{doctype}`.`{organization_field}` in ({values})"
+	value_sql = ', '.join([frappe.db.escape(o, percent=False) for o in values])
+	return f"`tab{doctype}`.`{field}` in ({value_sql})"
 
 def get_visible_query_conditions(
 	doctype: str,
@@ -164,7 +199,13 @@ def get_visible_query_conditions(
 
 
 
-def _get_user_permissions_in_organization(meta, organization, user=None, is_owner=None, type: viewable_type = 'viewable'):
+def _get_user_permissions_in_organization(
+	meta,
+	organization: str,
+	user=None,
+	is_owner=None,
+	type: viewable_type = 'viewable'
+):
 	"""
 	Returns dict of evaluated role permissions like
 	        {
@@ -240,7 +281,11 @@ def to_permission_type(ptype) -> viewable_type:
 	return 'viewable'
 
 def _has_permission_by_organization(
-	meta, organization, user=None, is_owner=None, ptype = '',
+	meta,
+	organization: str | list[str] | set[str],
+	user=None,
+	is_owner=None,
+	ptype = '',
 ):
 	perm = _get_user_permissions_in_organization(
 		meta,
@@ -257,9 +302,17 @@ def _has_permission_by_organization(
 	return False
 
 
-def has_permission(doc: Document, ptype, user, organization_field = 'organization'):
+def has_permission(
+	doc: Document,
+	ptype,
+	user,
+	field: str = 'organization',
+	doc_type: str | None = None,
+):
 	if user == 'Administrator': return
-	organization = doc.get(organization_field)
+	value: Any = doc.get(field) or None
+	organization: str | list[str] = get_bind_organizations(doc_type, value) if doc_type else value or []
+
 	is_owner = (doc.get("owner") or "").lower() == user.lower()
 
 	if organization and not _has_permission_by_organization(
@@ -272,8 +325,9 @@ def has_permission(doc: Document, ptype, user, organization_field = 'organizatio
 
 	if to_permission_type(ptype)  != 'editable': return
 
-	last_organization = (last := doc.get_latest()) and last.get(organization_field)
-	if last_organization == organization: return
+	last_value: Any = (last := doc.get_latest()) and last.get(field) or None
+	if last_value == value: return
+	last_organization: list[str] | str = get_bind_organizations(doc_type, last_value) if doc_type else last_value or []
 
 	if last_organization and not _has_permission_by_organization(
 		doc.meta,
