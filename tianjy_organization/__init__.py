@@ -27,7 +27,7 @@ def member_type_sql_where(type: member_type) -> str:
 		return f'{type} = 1'
 	return 'visible = 1'
 
-def member_type_qb_where(type: member_type) -> str:
+def member_type_qb_where(type: member_type):
 	Table = DocType(TianjyOrganizationMember.DOCTYPE)
 	if type == 'updatable':
 		return (Table.addible == 1) | (Table.editable == 1)
@@ -64,15 +64,26 @@ def get_roles(
 	user=None,
 	type: viewable_type = 'viewable'
 ) -> list[str] | None:
-	"""获取用户在某组织内的角色，如果用户在组织内无相关权限时，则返回 None 而非数组"""
+	"""
+	获取用户在某组织内的角色
+
+	如果用户在组织内无相关权限时，则返回 None 而非数组
+
+	流程简化描述：
+	1. 获取成员信息与继承信息:
+	   members = (member.organization = organization ∧ member.user = user ∧ member.type = type)
+	2. 获取角色信息 roles = (role.organization ∈ members.inherit_from ∧ role.user = user)
+	"""
 	if not organization: return
 	if not isinstance(organization, str) and not isinstance(organization, list) and not isinstance(organization, set): return
+
+	user = _get_user(user)
 
 	members = frappe.get_all(
 		TianjyOrganizationMember.DOCTYPE,
 		filters = {
 			"organization": organization if isinstance(organization, str) else ('in', list(organization)),
-			"user": _get_user(user),
+			"user": user,
 			type if type in ['addible', 'editable', 'deletable'] else 'viewable': 1,
 		},
 		or_filters = dict(addible=1,editable=1) if type == 'updatable' else None,
@@ -91,6 +102,7 @@ def get_roles(
 
 
 def get_bind_organizations(doc_type: str, doc_name: str | list[str]) -> list[str]:
+	"""获取绑定特定文档的组织列表"""
 	if not doc_name: return []
 	Table = DocType(TianjyOrganization.DOCTYPE)
 	q = frappe.qb.from_(Table)
@@ -130,17 +142,17 @@ def get_user_organizations_by_doctype_permission(
 	doctype: str,
 	user: str | None = None,
 ) -> list[str]:
-	"""获取当前用户在特定 DocType 内有权限的组织列表"""
+	"""获取用户在特定 DocType 内有权限的组织列表"""
 	doctype_roles = frappe.permissions.get_doctype_roles(doctype)
 	return get_user_organizations_by_role(doctype_roles, user)
 
 
-def get_user_organization_docs_by_doctype_permission(
+def get_user_organization_doc_names_by_doctype_permission(
 	doctype: str,
 	doc_type: str,
 	user: str | None = None,
 ) -> list[str]:
-	"""获取当前用户在特定 DocType 内有权限的组织列表"""
+	"""获取用户在特定 DocType 内有权限的组织关联的特定类型文档名称列表"""
 	Table = DocType(TianjyOrganization.DOCTYPE)
 	q = frappe.qb.from_(Table)
 	q = q.select('document')
@@ -180,7 +192,7 @@ def get_permission_query_conditions(
 	if user == 'Administrator': return
 
 	values = set(
-		get_user_organization_docs_by_doctype_permission(doctype, doc_type, user) if doc_type
+		get_user_organization_doc_names_by_doctype_permission(doctype, doc_type, user) if doc_type
 		else get_user_organizations_by_doctype_permission(doctype, user)
 	)
 	if not values: return "1 = 0"
@@ -309,6 +321,26 @@ def has_permission(
 	field: str = 'organization',
 	doc_type: str | None = None,
 ):
+	"""
+	判断是否有指定权限
+	e.g.
+
+	### Test Doctype 自定义的 has_permission 函数
+	```python
+	import tianjy_organization
+	def has_permission(doc, ptype, user):
+		# 注意指明 doctype 参数为当前 doctype
+		return tianjy_organization.has_permission(doc, ptype, user, 'organization')
+	```
+	### hooks.py 文件定义钩子
+
+	```python
+	has_permission = {
+		## 使用上面自定义的钩子
+		"Test Doctype": ".....has_permission",
+	}
+	```
+	"""
 	if user == 'Administrator': return
 	value: Any = doc.get(field) or None
 	organization: str | list[str] = get_bind_organizations(doc_type, value) if doc_type else value or []

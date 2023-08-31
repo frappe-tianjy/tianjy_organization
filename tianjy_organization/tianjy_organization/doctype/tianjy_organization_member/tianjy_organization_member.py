@@ -11,6 +11,7 @@ from ..tianjy_organization_role.tianjy_organization_role import TianjyOrganizati
 
 @frappe.whitelist()
 def get_user_organization_roles(user, organization):
+	"""获取指定用户在指定组织内的角色"""
 	return frappe.get_all(
 		TianjyOrganizationRole.DOCTYPE,
 		filters=dict(user=user, organization=organization),
@@ -21,6 +22,7 @@ def get_user_organization_roles(user, organization):
 
 @frappe.whitelist()
 def set_user_organization_roles(user, organization, roles):
+	"""修改指定用户在指定组织内的角色"""
 	doc = TianjyOrganizationMember.find(user, organization)
 	if doc:
 		doc.check_permission('write')
@@ -28,8 +30,11 @@ def set_user_organization_roles(user, organization, roles):
 	elif not doc:
 		roles = []
 
+	# 之前已经添加的角色
 	old_roles = get_user_organization_roles(user, organization)
+	# 需要移除的角色
 	need_remove = set(old_roles) - set(roles)
+	# 需要添加的角色
 	need_add = (set(roles) - set(old_roles)) & set(get_all_roles())
 	if need_remove:
 		frappe.db.delete(TianjyOrganizationRole.DOCTYPE, dict(
@@ -57,6 +62,11 @@ def get_all_roles():
 
 
 def inheritable_on_update(inheritable, method):
+	"""
+	继承被更新(含创建)时的钩子
+
+	此钩子中更新继承配置时，直接使用 frappe.qb 跳过 TianjyOrganizationMember 中的验证
+	"""
 	inherit_from = inheritable.inherit_from
 	organization = inheritable.organization
 
@@ -99,6 +109,11 @@ def inheritable_on_update(inheritable, method):
 	insert_qb.run()
 
 def inheritable_on_trash(inheritable, method):
+	"""
+	继承被删除时的钩子
+
+	此钩子中更新继承配置时，直接使用 frappe.qb 跳过 TianjyOrganizationMember 中的验证
+	"""
 	frappe.db.delete(TianjyOrganizationMember.DOCTYPE, filters=dict(
 		organization=inheritable.organization,
 		inherit_from=inheritable.inherit_from
@@ -108,6 +123,7 @@ class TianjyOrganizationMember(Document):
 	DOCTYPE="Tianjy Organization Member"
 	@classmethod
 	def find(cls, user, organization) -> 'TianjyOrganizationMember | None':
+		"""根据用户和组织查找"""
 		try:
 			return frappe.get_last_doc(cls.DOCTYPE, filters=dict(
 				user=user,
@@ -119,13 +135,16 @@ class TianjyOrganizationMember(Document):
 
 	def before_validate(self):
 		if self.is_new():
+			# 新建时，将继承设置为自身组织
 			self.inherit_from = self.organization # type: ignore
 			self.is_inherit = 0
 	def validate(self):
+		# 如果是继承的，则禁止用户修改
 		if self.inherit_from != self.organization: # type: ignore
 			return frappe.throw('无法修改通过继承的配置')
 
 	def before_save(self):
+		# 约束权限关系
 		viewable = self.viewable # type: ignore
 		if viewable:
 			self.visible = viewable
@@ -137,6 +156,8 @@ class TianjyOrganizationMember(Document):
 		Table = DocType(self.DOCTYPE)
 		user = self.user # type: ignore
 		inherit_from = self.organization # type: ignore
+
+		# 将原有继承自此的信息全部删除
 		frappe.db.delete(self.DOCTYPE, filters=dict(
 			user=user,
 			inherit_from=inherit_from,
@@ -144,6 +165,7 @@ class TianjyOrganizationMember(Document):
 		));
 
 
+		# 获取继承关系
 		organizations = frappe.get_all(
 			TianjyOrganizationInheritable.DOCTYPE,
 			fields=['visible', 'viewable', 'addible', 'editable', 'deletable', 'manageable', 'organization'],
@@ -163,6 +185,7 @@ class TianjyOrganizationMember(Document):
 			'name', 'user', 'organization', 'inherit_from', 'is_inherit',
 			'visible', 'viewable', 'addible', 'editable', 'deletable', 'manageable'
 		)
+		# 重新创建继承信息
 		for inheritable in organizations:
 			organization = inheritable['organization']
 			name = f'{inherit_from}:{organization}/{user}'
@@ -180,6 +203,8 @@ class TianjyOrganizationMember(Document):
 
 
 	def on_trash(self, allow_root_deletion=False):
+
+		# 删除时，连同继承数据一起删除
 		frappe.db.delete(self.DOCTYPE, filters=dict(
 			inherit_from=self.organization, # type: ignore
 			user=self.user, # type: ignore

@@ -1,0 +1,73 @@
+Table DOCTYPE [headercolor: #FFFFFF] { name text [pk] }
+Table USER [headercolor: #FFFFFF] { name text [pk] }
+Table ROLE [headercolor: #FFFFFF] { name text [pk] }
+Table WORKSPACE [headercolor: #FFFFFF] { name text [pk] }
+
+Table organization {
+  name text [pk]
+  label text
+  parent_organization text [ref: > organization.name]
+  type text [ref: > organization_type.name]
+  doc_type text [ref: > DOCTYPE.name]
+  document text
+}
+
+
+Table organization_type {
+  name text [pk]
+  root_only boolean
+  parent_types link(organization_type_list) [ref: > organization_type.name]
+  doc_types link(organization_doctype_list) [ref: > DOCTYPE.name]
+  _selectable boolean
+}
+
+
+Table organization_role {
+  name text [pk]
+  organization text [ref: > organization.name]
+  role text [ref: > ROLE.name]
+  user text [ref: > USER.name]
+}
+
+Table organization_workspace {
+  name text [pk]
+  organization text [ref: > organization.name]
+  workspace text [ref: > WORKSPACE.name]
+  default boolean
+}
+
+Table organization_member {
+  name text [pk]
+  organization text [ref: > organization.name]
+  inherit_from text [ref: > organization.name]
+  user text [ref: > USER.name]
+  visible boolean
+  viewable boolean
+  addible boolean
+  editable boolean
+  deletable boolean
+  manageable boolean
+  is_inherit boolean
+
+
+  Note: 'is_inherit 字段也是用来表示是否继承的，此字段用于部分时候的搜索'
+  Note: '当继承时，角色信息是直接使用继承数据，而不是复制数据，所以 inherit_from 字段还用来与角色表关联'
+  Note: '为便于角色信息的查询，对于不继承的，使 inherit_from = organization'
+}
+ref: organization_member.(user,inherit_from) > organization_role.(user,organization)
+
+
+Table organization_inheritable {
+  name text [pk]
+  organization text [ref: > organization.name]
+  inherit_from text [ref: > organization.name]
+  visible boolean
+  viewable boolean
+  addible boolean
+  editable boolean
+  deletable boolean
+  manageable boolean
+
+}
+
+ref: organization_inheritable.(organization,inherit_from) > organization_member.(organization,inherit_from)

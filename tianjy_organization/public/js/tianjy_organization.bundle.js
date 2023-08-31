@@ -2,6 +2,7 @@ import './selector';
 import './toHome';
 const { prototype } = frappe.views.Workspace;
 const old_append_item = prototype.append_item;
+/** 实现对非当前组织工作区的隐藏 */
 prototype.append_item = function append_item(item, container) {
 	old_append_item.call(this, item, container);
 	const { organization } = item;
