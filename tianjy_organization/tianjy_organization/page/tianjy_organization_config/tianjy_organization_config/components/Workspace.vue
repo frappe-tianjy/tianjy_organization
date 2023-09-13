@@ -1,0 +1,49 @@
+<template>
+	<div 
+		ref="wrapperRef" 
+		class="content page-container" 
+		id="page-Workspaces" 
+		data-page-route="Workspaces"
+	>
+	</div>
+</template>
+
+<script setup lang='ts'>
+import { onMounted, ref, watch } from 'vue';
+import Workspace from './workspace.js';
+
+interface Props{
+	organization:string
+}
+const props = defineProps<Props>();
+interface Emit{
+
+}
+const emit = defineEmits<Emit>();
+const wrapperRef = ref<HTMLElement>()
+
+watch(wrapperRef,()=>{
+	if(!wrapperRef.value){return;}
+	frappe.ui.make_app_page({
+		parent: wrapperRef.value,
+		name: "Workspaces",
+		title: __("Workspace"),
+	});
+	const workspace = new Workspace(wrapperRef.value, props.organization);
+	workspace.show()
+}, {immediate: true})
+</script>
+
+<style lang='less' scoped>
+.content{
+	height: 100%;
+    display: flex;
+    flex-direction: column;
+	:deep(.page-body){
+		overflow: auto;
+	}
+	:deep(.page-head){
+		position: static;
+	}
+}
+</style>

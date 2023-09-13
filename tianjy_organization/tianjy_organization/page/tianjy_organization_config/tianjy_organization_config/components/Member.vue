@@ -1,0 +1,148 @@
+<template>
+	<div class="member">	
+		<div class="btn-container">
+			<ElButton type="primary" @click="createMember">新增人员</ElButton>
+		</div>
+		<el-table :data="memberList" :border="true" style="width: 100%" height="100%">
+			<el-table-column fixed prop="user_doc.full_name" label="用户" width="180" />
+			<el-table-column prop="role" label="角色" >
+				<template #default="scope">
+					<span>{{ scope.row.roles.map(i=>i.role).join(',') }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column prop="visible" label="可见" width="60" >
+				<template #default="scope">
+					{{ scope.row.visible?'是':'否' }}
+				</template>
+			</el-table-column>
+			<el-table-column prop="viewable" label="可查看" width="60" >
+				<template #default="scope">
+					{{ scope.row.viewable?'是':'否' }}
+				</template>
+			</el-table-column>
+			<el-table-column prop="addible" label="可添加" width="60" >
+				<template #default="scope">
+					{{ scope.row.addible?'是':'否' }}
+				</template>
+			</el-table-column>
+			<el-table-column prop="editable" label="可编辑" width="60" >
+				<template #default="scope">
+					{{ scope.row.editable?'是':'否' }}
+				</template>
+			</el-table-column>
+			<el-table-column prop="deletable" label="可删除" width="60" >
+				<template #default="scope">
+					{{ scope.row.deletable?'是':'否' }}
+				</template>
+			</el-table-column>
+			<el-table-column prop="manageable" label="可管理" width="60" >
+				<template #default="scope">
+					{{ scope.row.manageable?'是':'否' }}
+				</template>
+			</el-table-column>
+
+			<el-table-column prop="address" label="操作" width="180" >
+				<template #default="scope">
+					<ElButton type="primary" @click="editMember(scope.row)">编辑</ElButton>
+					<ElButton type="danger" @click="deleteMember(scope.row)">删除</ElButton>
+				</template>
+			</el-table-column>
+		</el-table>
+	</div>
+</template>
+
+<script setup lang='ts'>
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Member } from '../type';
+import { ElMessageBox, ElMessage } from 'element-plus';
+
+interface Props{
+	organization:string
+}
+const props = defineProps<Props>();
+interface Emit{
+
+}
+const emit = defineEmits<Emit>();
+const memberList = ref<Member[]>([])
+
+watch(()=>props.organization, ()=>{
+	getMembers()
+}, {immediate: true})
+
+async function getMembers(){
+	if(!props.organization){
+		return;
+	}
+	const res = await frappe.call<{ message: Member[] }>({
+		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_config.tianjy_organization_config.get_members',
+		args:{
+			organization_name:props.organization
+		}
+	});
+	memberList.value = res?.message||[]
+}
+
+function createMember(){
+	const newDoc = frappe.model.make_new_doc_and_get_name('Tianjy Organization Member');
+	frappe.model.set_value('Tianjy Organization Member', newDoc, 'organization', props.organization);
+	frappe.set_route(['form', 'Tianjy Organization Member', newDoc]);
+}
+
+function editMember(member:Member){
+	frappe.set_route(['form', 'Tianjy Organization Member', member.name]);
+}
+function deleteMember(member:Member){
+	ElMessageBox.confirm(
+			'您确认删除此人员吗?',
+			'请确认',
+			{
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'warning',
+			}
+		).then(async () => {
+			await frappe.db.delete_doc('Tianjy Organization Member', member.name)
+			getMembers()
+			ElMessage({
+				type: 'success',
+				message: '删除成功',
+			});
+		}).catch(() => {
+			ElMessage({
+				type: 'info',
+				message: '取消删除',
+			});
+		});
+}
+
+frappe.socketio.doctype_subscribe('Tianjy Organization Member');
+
+frappe.realtime.on('list_update', p => {
+	if (p.doctype !== 'Tianjy Organization Member'&&p.doctype !== 'Tianjy Organization Role') { return; }
+	getMembers();
+});
+
+const popstateListener = function (event:any) {
+	getMembers();
+};
+onMounted(() => {
+	window.addEventListener('popstate', popstateListener);
+});
+onUnmounted(() => {
+	window.removeEventListener('popstate', popstateListener);
+});
+</script>
+
+<style lang='less' scoped>
+.member{
+	height: 100%;
+	display: flex;
+    flex-direction: column;
+	.btn-container{
+		text-align: right;
+		margin-bottom: 8px;
+	}
+}
+
+</style>

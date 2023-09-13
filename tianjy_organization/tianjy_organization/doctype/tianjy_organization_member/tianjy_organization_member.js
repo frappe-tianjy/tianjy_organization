@@ -59,11 +59,11 @@ function getAllRoles(force) {
 function getUserOrganizationRoles(user, organization) {
 	return frappe.xcall('tianjy_organization.tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member.get_user_organization_roles', { user, organization });
 }
-function saveUserOrganizationRoles(user, organization, roles) {
-	return frappe.xcall('tianjy_organization.tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member.set_user_organization_roles', { user, organization, roles });
+async function saveUserOrganizationRoles(user, organization, roles) {
+	await frappe.xcall('tianjy_organization.tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member.set_user_organization_roles', { user, organization, roles });
 }
 let id = 0;
-async function createEditor(user, organization) {
+async function createEditor(frm, user, organization) {
 	id++;
 	const k = id;
 	const [allRoles, roles] = await Promise.all([
@@ -88,9 +88,15 @@ async function createEditor(user, organization) {
 				})),
 			},
 		],
-		primary_action() {
+		async primary_action() {
 			this.hide();
-			saveUserOrganizationRoles(user, organization, this.get_value('roles'));
+			await saveUserOrganizationRoles(user, organization, this.get_value('roles'));
+			const roles = await frappe.db.get_list('Tianjy Organization Role',
+                                     {filters:{
+                                         'user': user, 'organization': organization},
+                                     fields:[
+                                         'user', 'organization', 'role', 'name']})
+			frm.set_value('roles', roles)					
 		},
 		primary_action_label: __('Update'),
 	});
@@ -113,7 +119,8 @@ async function createEditor(user, organization) {
 frappe.ui.form.on('Tianjy Organization Member', {
 	role_editor(frm) {
 		const doc = frm.doc;
-		createEditor(doc.user, doc.organization);
+		createEditor(frm, doc.user, doc.organization);
+		frm.refresh_field('roles');
 	},
 	refresh(frm) {
 		const { doc, meta } = frm;
