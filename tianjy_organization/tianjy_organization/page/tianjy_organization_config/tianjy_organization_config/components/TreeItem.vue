@@ -2,7 +2,7 @@
 <template>
 	<div class="custom-tree-node">
 		<span>{{ node.label }}</span>
-		<el-dropdown @command="command">
+		<el-dropdown @command="command" v-if="node.data.permissions.createPermission||node.data.permissions.deletePermission">
 			<span class="el-dropdown-link">
 				<el-icon class="el-icon--right" @click="e=>e.stopPropagation()">
 					<MoreFilled />

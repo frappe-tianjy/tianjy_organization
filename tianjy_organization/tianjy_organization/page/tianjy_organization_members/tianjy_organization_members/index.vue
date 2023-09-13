@@ -12,10 +12,10 @@
 				></Users>
 			</template>
 			<el-tabs v-model="activeName" class="user-tabs">
-				<el-tab-pane label="基本信息" name="info">
+				<el-tab-pane class="tab-container" label="基本信息" name="info">
 					<FormDetail :name="user?.name" doctype="User"></FormDetail>
 				</el-tab-pane>
-				<el-tab-pane class="organization" label="组织" name="organization">
+				<el-tab-pane class="tab-container" label="组织" name="organization">
 					<Organization v-if="user" :permissions="memberPermissions" :user="user.name"></Organization>
 				</el-tab-pane>
 			</el-tabs>
@@ -75,7 +75,8 @@ const memberPermissions = computed(() => {
     display: flex;
     flex-direction: column;
 }
-.organization{
+.tab-container{
 	height: 100%;
+	overflow: auto;
 }
 </style>

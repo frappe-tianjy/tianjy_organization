@@ -1,31 +1,31 @@
 
 <template>
-	<div class="sider-container">
-		<div>
-		<el-button type="primary" @click="createOrganization">新建组织</el-button>
-	</div>
-	<div class="tree-container">
-		<el-tree 
-			v-if="organizationTree.length>0"
-			:data="organizationTree"  
-			@node-click="handleNodeClick" 
-			default-expand-all
-			highlight-current
-			node-key="name"
-			:current-node-key="currentNodeKey"
-			:expand-on-click-node="false"
-			draggable
-			@node-drop="handleDrop"
-			:allow-drop="allowDrop"
-		>
-			<template #default="{ node, data }">
-				<TreeItem 
-					:node="node"
-					@reload="getOrganizations"
-				></TreeItem>
-			</template>
-		</el-tree>	
-	</div>
+	<div class="sider-container" v-loading="loading">
+		<div class="btn-container">
+			<el-button v-if="permissions.createPermission" type="primary" @click="createOrganization">新建组织</el-button>
+		</div>
+		<div class="tree-container">
+			<el-tree 
+				v-if="organizationTree.length>0"
+				:data="organizationTree"  
+				@node-click="handleNodeClick" 
+				default-expand-all
+				highlight-current
+				node-key="name"
+				:current-node-key="currentNodeKey"
+				:expand-on-click-node="false"
+				draggable
+				@node-drop="handleDrop"
+				:allow-drop="allowDrop"
+			>
+				<template #default="{ node, data }">
+					<TreeItem 
+						:node="node"
+						@reload="getOrganizations"
+					></TreeItem>
+				</template>
+			</el-tree>	
+		</div>
 	</div>
 
 </template>
@@ -53,11 +53,12 @@ interface Emit{
 const emit = defineEmits<Emit>();
 const organizationList = ref<Organization[]>([]);
 const currentNodeKey = ref<string>('');
-
+const loading = ref<boolean>(false);
 onMounted(()=>{
 	getOrganizations();
 })
 async function getOrganizations(){
+	loading.value = true;
 	const res = await frappe.call<{ message: Organization[] }>({
 		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_config.tianjy_organization_config.get_organizations',
 	});
@@ -66,6 +67,7 @@ async function getOrganizations(){
 		currentNodeKey.value =  organizationList.value[0]?.name
 		emit('update:modelValue', organizationList.value[0])
 	}
+	loading.value = false
 }
 
 const organizationTree = computed(()=>{
@@ -91,6 +93,7 @@ async function handleDrop(
 ){
 	const before = dropType==='inner'?false:dropType ==='before'
 	const children = dropType==='inner'
+	loading.value = true;
 	await frappe.call('guigu.tree.tree_sort', {
 				doctype: 'Tianjy Organization',
 				target:dropNode.data.name, 
@@ -153,6 +156,9 @@ frappe.realtime.on('list_update', p => {
 	flex-direction: column;
 	height: 100%;
 	padding-top: 8px;
+	.btn-container{
+		margin-bottom: 8px;
+	}
 	.tree-container{
 		overflow-y: auto;
 	}

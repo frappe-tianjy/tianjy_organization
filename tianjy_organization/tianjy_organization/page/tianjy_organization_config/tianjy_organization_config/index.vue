@@ -6,18 +6,18 @@
 		<template #sider>
 			<OrganizationTree 
 				v-model="organization"
-				:permissions="permissions"
+				:permissions="organizationPermissions"
 			></OrganizationTree>
 		</template>
 		<el-tabs v-model="activeName" class="organization-tabs">
-			<el-tab-pane label="基本信息" name="info">
+			<el-tab-pane class="tab-container" label="基本信息" name="info">
 				<FormDetail :name="organization?.name" doctype="Tianjy Organization"></FormDetail>
 			</el-tab-pane>
-			<el-tab-pane class="workspace" label="工作区" name="workspace">
+			<el-tab-pane class="tab-container" label="工作区" name="workspace">
 				<Workspace v-if="organization" :organization="organization.name"></Workspace>
 			</el-tab-pane>
-			<el-tab-pane class="member" label="成员" name="users">
-				<Member v-if="organization" :organization="organization.name"></Member>
+			<el-tab-pane class="tab-container" label="成员" name="users">
+				<Member v-if="organization" :organization="organization.name" :permissions="memberPermissions"></Member>
 			</el-tab-pane>
 		</el-tabs>
 	</Page>
@@ -42,27 +42,36 @@ interface Emit{
 const emit = defineEmits<Emit>();
 const organization = ref<Organization>();
 const activeName = ref<string>('info');
-const meta = ref<locals.DocType>();
+const organizationMeta = ref<locals.DocType>();
+const memberMeta = ref<locals.DocType>();
 
-onMounted(()=>getMeta())
-async function getMeta() {
-	let local_meta = frappe.get_meta('Tianjy Organization');
+onMounted(async()=>{
+	organizationMeta.value = await getMeta('Tianjy Organization')
+	memberMeta.value = await getMeta('Tianjy Organization Member')
+})
+async function getMeta(doctype:string) {
+	let local_meta = frappe.get_meta(doctype);
 	if (local_meta) {
-		meta.value = local_meta;
-		return;
+		return local_meta;
 	}
-	await frappe.model.with_doctype('Tianjy Organization');
-	local_meta = frappe.get_meta('Tianjy Organization');
-	meta.value = local_meta || undefined;
+	await frappe.model.with_doctype(doctype);
+	return frappe.get_meta(doctype)||undefined;
 }
-const permissions = computed(() => {
-	if (!meta.value) {
+
+function getPermission(meta?:locals.DocType){
+	if (!meta) {
 		return { deletePermission: false, createPermission: false, writePermission:false };
 	}
-	const deletePermission = frappe.perm.has_perm(meta.value.name, 0, 'delete');
-	const createPermission = frappe.perm.has_perm(meta.value.name, 0, 'create');
-	const writePermission = frappe.perm.has_perm(meta.value.name, 0, 'write');
+	const deletePermission = frappe.perm.has_perm(meta.name, 0, 'delete');
+	const createPermission = frappe.perm.has_perm(meta.name, 0, 'create');
+	const writePermission = frappe.perm.has_perm(meta.name, 0, 'write');
 	return { deletePermission, createPermission, writePermission };
+}
+const organizationPermissions = computed(() => {
+	return getPermission(organizationMeta.value)
+});
+const memberPermissions = computed(() => {
+	return getPermission(memberMeta.value)
 });
 </script>
 
@@ -72,7 +81,7 @@ const permissions = computed(() => {
     display: flex;
     flex-direction: column;
 }
-.workspace, .member{
+.tab-container{
 	height: 100%;
 }
 </style>

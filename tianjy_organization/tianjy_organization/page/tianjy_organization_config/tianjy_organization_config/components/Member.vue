@@ -1,7 +1,7 @@
 <template>
-	<div class="member">	
+	<div class="member" v-loading="loading">	
 		<div class="btn-container">
-			<ElButton type="primary" @click="createMember">新增人员</ElButton>
+			<ElButton v-if="permissions.createPermission" type="primary" @click="createMember">新增人员</ElButton>
 		</div>
 		<el-table :data="memberList" :border="true" style="width: 100%" height="100%">
 			<el-table-column fixed prop="user_doc.full_name" label="用户" width="180" />
@@ -41,10 +41,10 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column prop="address" label="操作" width="180" >
+			<el-table-column v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" width="160" >
 				<template #default="scope">
-					<ElButton type="primary" @click="editMember(scope.row)">编辑</ElButton>
-					<ElButton type="danger" @click="deleteMember(scope.row)">删除</ElButton>
+					<ElButton v-if="permissions.writePermission" type="primary" @click="editMember(scope.row)">编辑</ElButton>
+					<ElButton v-if="permissions.deletePermission" type="danger" @click="deleteMember(scope.row)">删除</ElButton>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -53,11 +53,12 @@
 
 <script setup lang='ts'>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import type { Member } from '../type';
+import type { Member, Permissions } from '../type';
 import { ElMessageBox, ElMessage } from 'element-plus';
 
 interface Props{
 	organization:string
+	permissions:Permissions
 }
 const props = defineProps<Props>();
 interface Emit{
@@ -65,6 +66,7 @@ interface Emit{
 }
 const emit = defineEmits<Emit>();
 const memberList = ref<Member[]>([])
+const loading = ref<boolean>(false);
 
 watch(()=>props.organization, ()=>{
 	getMembers()
@@ -74,6 +76,7 @@ async function getMembers(){
 	if(!props.organization){
 		return;
 	}
+	loading.value = true
 	const res = await frappe.call<{ message: Member[] }>({
 		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_config.tianjy_organization_config.get_members',
 		args:{
@@ -81,6 +84,7 @@ async function getMembers(){
 		}
 	});
 	memberList.value = res?.message||[]
+	loading.value = false
 }
 
 function createMember(){
@@ -102,6 +106,7 @@ function deleteMember(member:Member){
 				type: 'warning',
 			}
 		).then(async () => {
+			loading.value = true
 			await frappe.db.delete_doc('Tianjy Organization Member', member.name)
 			getMembers()
 			ElMessage({
