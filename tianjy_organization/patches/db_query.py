@@ -44,6 +44,15 @@ def prepare_filter_condition(self: frappe.model.db_query.DatabaseQuery, f):
 	if tname not in self.tables:
 		self.append_table(tname)
 
+	if value == '~':
+		organization = frappe.get_request_header('X-Tianjy-Organization', "")
+		value = organization if isinstance(organization, str) else ''
+	elif isinstance(value, list) and '~' in value:
+		value = [v for v in value if value != '~']
+		organization = frappe.get_request_header('X-Tianjy-Organization', "")
+		if organization and isinstance(organization, str): value.append(organization)
+	if not value: return '0 = 0'
+
 	filters = None
 	if operator in ('organization', 'organizations', 'not organization', 'not organizations'):
 		filters=dict(name=('in', value) if isinstance(value, list) else value)
