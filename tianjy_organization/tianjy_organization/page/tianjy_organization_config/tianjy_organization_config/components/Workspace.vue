@@ -22,8 +22,9 @@ interface Emit{
 const emit = defineEmits<Emit>();
 const wrapperRef = ref<HTMLElement>()
 
-watch(wrapperRef,()=>{
-	if(!wrapperRef.value){return;}
+watch([wrapperRef, ()=>props.organization],(_, org)=>{
+	if(!wrapperRef.value||!props.organization){return;}
+	wrapperRef.value.innerHTML = '';
 	frappe.ui.make_app_page({
 		parent: wrapperRef.value,
 		name: "Workspaces",

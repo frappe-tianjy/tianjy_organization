@@ -57,6 +57,8 @@
 <style lang='less' scoped>
 .form-container{
 	border:1px solid #eee;
+	height: 100%;
+	overflow: auto;
 	:deep(.form-section .form-column:first-child){
 		padding-left: 15px;
 	}

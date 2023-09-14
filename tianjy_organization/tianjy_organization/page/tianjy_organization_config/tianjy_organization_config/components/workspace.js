@@ -63,7 +63,9 @@ export default class Workspace {
 	}
 
 	get_pages() {
-		return frappe.xcall("tianjy_organization.workspace.get_workspace_sidebar_items");
+		return frappe.xcall("tianjy_organization.tianjy_organization.page.tianjy_organization_config.tianjy_organization_config.get_workspace_sidebar_items",{
+			organization_name: this.organization_name
+		});
 	}
 
 	sidebar_item_container(item) {

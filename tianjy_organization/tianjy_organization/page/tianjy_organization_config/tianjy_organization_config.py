@@ -1,5 +1,12 @@
 import frappe
-from json import loads
+from json import loads, dumps
+
+from pypika import Order
+import frappe
+from frappe import _
+from frappe.desk.desktop import Workspace
+from frappe.query_builder.utils import DocType
+from frappe.desk.doctype.workspace.workspace import last_sequence_id
 
 
 @frappe.whitelist()
@@ -46,9 +53,9 @@ def set_organization_workspace(workspace_name, organization_name, default):
     organization_workspace = frappe.get_list('Tianjy Organization Workspace',
                                              filters=[
                                                  ['workspace', '=',
-                                                     workspace_name],
+                                                  workspace_name],
                                                  ['organization', '=',
-                                                     organization_name],
+                                                  organization_name],
                                              ])
     for ow in organization_workspace:
         wo_doc = frappe.get_doc('Tianjy Organization Workspace', ow.name)
@@ -82,7 +89,8 @@ def delete_page(page):
 def get_members(organization_name):
     member_list = frappe.get_list('Tianjy Organization Member',
                                   filters=[
-                                      ['organization', '=', organization_name]
+                                      ['organization', '=',
+                                       organization_name]
                                   ],
                                   fields=['*'],
                                   limit=0
@@ -90,7 +98,8 @@ def get_members(organization_name):
     user_names = list(map(lambda ml: ml.user, member_list))
     user_list = frappe.get_list('User',
                                 filters=[
-                                    ['name', 'in', user_names]
+                                    ['name', 'in',
+                                     user_names]
                                 ],
                                 fields=['*'],
                                 limit=0
@@ -99,7 +108,7 @@ def get_members(organization_name):
     organization_role_list = frappe.get_list('Tianjy Organization Role',
                                              filters=[
                                                  ['organization', '=',
-                                                     organization_name]
+                                                  organization_name]
                                              ],
                                              fields=['*'],
                                              limit=0
@@ -113,3 +122,88 @@ def get_members(organization_name):
         member.roles = list(filter(
             lambda organization_role: organization_role.user == user.name, organization_role_list))
     return member_list
+
+
+def get_pages(organization_name):
+    # don't get domain restricted pages
+
+    Workspace = DocType('Workspace')
+    OrganizationWorkspace = DocType('Tianjy Organization Workspace')
+
+    query = frappe.qb.from_(Workspace).select(
+        Workspace.name.as_("name"),
+        Workspace.title.as_("title"),
+        Workspace.for_user.as_("for_user"),
+        Workspace.parent_page.as_("parent_page"),
+        Workspace.content.as_("content"),
+        Workspace.public.as_("public"),
+        Workspace.module.as_("module"),
+        Workspace.icon.as_("icon"),
+        Workspace.is_hidden.as_("is_hidden"),
+        OrganizationWorkspace.organization.as_('organization'),
+    ).left_join(OrganizationWorkspace).on(Workspace.name == OrganizationWorkspace.workspace)
+    where = OrganizationWorkspace.organization == organization_name
+    query = query.where(where)
+    query = query.orderby(Workspace.sequence_id, order=Order.asc)
+    return query.run(as_dict=True)
+
+
+@frappe.whitelist()
+def get_workspace_sidebar_items(organization_name):
+    """Get list of sidebar items for desk"""
+    user: str = frappe.session.user
+    is_admin = "System Manager" in frappe.get_roles()
+    has_access = "Workspace Manager" in frappe.get_roles()
+
+    all_pages = get_pages(organization_name)
+    pages = []
+    private_pages = []
+
+    # Filter Page based on Permission
+    for page in all_pages:
+        try:
+            workspace = Workspace(page, True)
+            if has_access or workspace.is_permitted():
+                if page.public and (has_access or not page.is_hidden):
+                    pages.append(page)
+                elif page.for_user == user:
+                    private_pages.append(page)
+                page["label"] = _(page.get("name"))
+        except frappe.PermissionError:
+            pass
+    if private_pages:
+        pages.extend(private_pages)
+
+    if len(pages) == 0:
+        organization = frappe.get_doc('Tianjy Organization', organization_name)
+        workspace = frappe.new_doc("Workspace")
+        workspace.title = "{label}默认工作区".format(label=organization.label)
+        workspace.content = dumps([{
+            "type": "header",
+            "data": {"text": organization.label}
+        }])
+        workspace.label = organization.label
+        workspace.public = 1
+        workspace.for_user = ''
+        workspace.sequence_id = last_sequence_id(workspace) + 1
+        workspace.save(ignore_permissions=True)
+
+        organization_workspace = frappe.new_doc(
+            'Tianjy Organization Workspace')
+        organization_workspace.workspace = workspace.name
+        organization_workspace.organization = organization_name
+        organization_workspace.default = 1
+        organization_workspace.save()
+        pages = [{
+            "name": workspace.name,
+            "title": workspace.title,
+            "for_user": workspace.for_user,
+            "parent_page": workspace.parent_page,
+            "content": workspace.content,
+            "public": workspace.public,
+            "module": workspace.module,
+            "icon": workspace.icon,
+            "is_hidden": workspace.is_hidden,
+            'organization': organization_name
+        }]
+    return {"pages": pages, "has_access": has_access}
