@@ -9,6 +9,8 @@ from frappe.model.document import Document
 from frappe.utils import cint
 from frappe.query_builder.utils import DocType
 
+from .patches import load_patches
+
 from .tianjy_organization.doctype.tianjy_organization.tianjy_organization import TianjyOrganization
 from .tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member import TianjyOrganizationMember
 from .tianjy_organization.doctype.tianjy_organization_role.tianjy_organization_role import TianjyOrganizationRole
@@ -391,3 +393,17 @@ def viewable():
 		fields=["name", "parent_organization as parent", "label"],
 		order_by="lft"
 	)
+
+
+
+
+connect = frappe.connect
+
+
+def custom_connect(*args, **kwargs):
+	out = connect(*args, **kwargs)
+	load_patches()
+	return out
+
+
+frappe.connect = custom_connect

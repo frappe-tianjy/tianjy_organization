@@ -1,5 +1,6 @@
 import './selector';
 import './toHome';
+import './frappe.ui.filter_utils.set_fieldtype';
 const { prototype } = frappe.views.Workspace;
 const old_append_item = prototype.append_item;
 /** 实现对非当前组织工作区的隐藏 */
