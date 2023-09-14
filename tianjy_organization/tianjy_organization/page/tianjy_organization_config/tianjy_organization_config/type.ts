@@ -41,3 +41,15 @@ export interface Member{
 	organization:string,
 	roles:{role:string}[],
 }
+
+export interface InheritOrganization{
+	name:string,
+	organization:string,
+	inherit_from:string,
+	visible:0|1,
+	viewable:0|1,
+	addible:0|1,
+	editable:0|1,
+	deletable:0|1,
+	manageable:0|1,
+}

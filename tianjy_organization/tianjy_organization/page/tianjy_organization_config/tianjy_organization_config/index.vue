@@ -19,6 +19,9 @@
 			<el-tab-pane class="tab-container" label="成员" name="users">
 				<Member v-if="organization" :organization="organization.name" :permissions="memberPermissions"></Member>
 			</el-tab-pane>
+			<el-tab-pane class="tab-container" label="继承" name="inherit">
+				<Inherit v-if="organization" :organization="organization.name" :permissions="inheritPermissions"></Inherit>
+			</el-tab-pane>
 		</el-tabs>
 	</Page>
 </template>
@@ -31,7 +34,7 @@ import type { Organization, OrganizationType } from './type';
 import FormDetail from './components/Detail.vue'
 import Workspace from './components/Workspace.vue'
 import Member from './components/Member.vue'
-
+import Inherit from './components/Inherit.vue'
 interface Props{
 
 }
@@ -44,10 +47,13 @@ const organization = ref<Organization>();
 const activeName = ref<string>('info');
 const organizationMeta = ref<locals.DocType>();
 const memberMeta = ref<locals.DocType>();
+const inheritMeta = ref<locals.DocType>();
+
 
 onMounted(async()=>{
 	organizationMeta.value = await getMeta('Tianjy Organization')
 	memberMeta.value = await getMeta('Tianjy Organization Member')
+	inheritMeta.value = await getMeta('Tianjy Organization Inheritable')
 })
 async function getMeta(doctype:string) {
 	let local_meta = frappe.get_meta(doctype);
@@ -73,6 +79,10 @@ const organizationPermissions = computed(() => {
 const memberPermissions = computed(() => {
 	return getPermission(memberMeta.value)
 });
+const inheritPermissions = computed(() => {
+	return getPermission(inheritMeta.value)
+});
+
 </script>
 
 <style lang='less' scoped>

@@ -90,7 +90,9 @@ def get_members(organization_name):
     member_list = frappe.get_list('Tianjy Organization Member',
                                   filters=[
                                       ['organization', '=',
-                                       organization_name]
+                                       organization_name],
+                                      ['inherit_from', '=',
+                                       organization_name],
                                   ],
                                   fields=['*'],
                                   limit=0
@@ -122,6 +124,40 @@ def get_members(organization_name):
         member.roles = list(filter(
             lambda organization_role: organization_role.user == user.name, organization_role_list))
     return member_list
+
+
+@frappe.whitelist()
+def get_inherit(organization_name):
+    inherit_list = frappe.get_list('Tianjy Organization Inheritable',
+                                   filters=[
+                                       ['organization', '=',
+                                        organization_name]
+                                   ],
+                                   fields=['*'],
+                                   limit=0
+                                   )
+    organization_names = list(map(lambda il: il.organization, inherit_list)) + \
+        list(map(lambda il: il.inherit_from, inherit_list))
+    organization_list = frappe.get_list('Tianjy Organization',
+                                        filters=[
+                                            ['name', 'in',
+                                             organization_names]
+                                        ],
+                                        fields=['*'],
+                                        limit=0
+                                        )
+    for inherit in inherit_list:
+        organizations = list(
+            filter(lambda ol: ol.name == inherit.organization, organization_list))
+        inherit_from_organizations = list(
+            filter(lambda ol: ol.name == inherit.inherit_from, organization_list))
+        if len(organizations) == 0 or len(inherit_from_organizations) == 0:
+            continue
+        organization = organizations[0]
+        inherit_from_organization = inherit_from_organizations[0]
+        inherit.organization_doc = organization
+        inherit.inherit_from_organization_doc = inherit_from_organization
+    return inherit_list
 
 
 def get_pages(organization_name):
