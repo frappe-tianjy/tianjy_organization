@@ -1,6 +1,6 @@
 <template>
 	<div v-loading="loading">
-		<Page :siderStyle="{width:'550px'}">
+		<Page :siderStyle="{width:'620px'}">
 			<template #title>
 				<div>组织人员</div>
 			</template>

@@ -1,6 +1,7 @@
 export interface User{
 	name:string,
-	full_name:string
+	full_name:string,
+	enabled:1|0
 }
 
 export interface Permissions{

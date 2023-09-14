@@ -5,6 +5,23 @@
 			<el-button v-if="permissions.createPermission" type="primary" @click="createUser">新建人员</el-button>
 		</div>
 		<div class="user-container">
+			<div>
+				<ElForm class="filter-form" :inline="true" :model="filterForm">
+					<el-form-item label="状态" clearable>
+						<ElSelect v-model="filterForm.enabled">
+							<el-option key="1" label="激活" :value="1"/>
+							<el-option key="0" label="禁用" :value="0"/>
+						</ElSelect>
+					</el-form-item>
+					<el-form-item label="用户：">
+						<ElInput v-model="filterForm.full_name"></ElInput>
+					</el-form-item>
+					<el-form-item>
+						<ElButton type="primary" @click="applyFilter">应用</ElButton>
+						<ElButton @click="clearFilter">清除</ElButton>
+					</el-form-item>
+				</ElForm>
+			</div>
 			<el-table 
 				ref="tableRef"
 				:data="userList" 
@@ -15,7 +32,8 @@
 				current-row-key="name"
 				@current-change="handleCurrentChange"
 			>
-				<el-table-column fixed prop="full_name" label="用户" />
+				<el-table-column fixed prop="full_name" label="用户" >
+				</el-table-column>
 				<el-table-column prop="email" label="邮箱"  width="180"></el-table-column>
 				<el-table-column prop="enabled" label="状态" width="60" >
 					<template #default="scope">
@@ -34,9 +52,9 @@
 </template>
 
 <script setup lang='ts'>
-import { ref, onMounted, computed, toRaw, watch} from 'vue';
+import { ref, onMounted, computed, toRaw, watch, reactive} from 'vue';
 import type { User, Permissions } from '../type';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import { ElMessageBox, ElMessage, ElInput } from 'element-plus';
 
 interface Props{
 	modelValue?:User
@@ -51,12 +69,22 @@ interface Emit{
 const emit = defineEmits<Emit>();
 const userList = ref<User[]>([]);
 const tableRef = ref<any>()
+const filterForm = reactive({
+	enabled:'',
+	full_name:''
+})
 onMounted(()=>{
 	getUsers();
 })
+
 async function getUsers(){
 	emit('update:loading', true)
-	const res = await frappe.db.get_list('User',{limit:'', fields:['*']})
+	const filters = Object.entries(filterForm).map(([key,value])=>{
+		if(value===''){return}
+		if(key==='enable'){ return [key,'=', value] }
+		return [key,'like', `%${value}%`]
+	}).filter(Boolean) as [string, string,any]
+	const res = await frappe.db.get_list<User>('User',{filters, limit:0, fields:['*'], order_by:'full_name asc'})
 	userList.value = res||[]
 	emit('update:modelValue', userList.value[0])
 	emit('update:loading', false)
@@ -100,6 +128,14 @@ function deleteUser(user:User){
 		});
 }
 
+function applyFilter(){
+	getUsers()
+}
+function clearFilter(){
+	filterForm.enabled = ''
+	filterForm.full_name = ''
+	getUsers()
+}
 frappe.socketio.doctype_subscribe('User');
 frappe.realtime.on('list_update', p => {
 	if (p.doctype !== 'User') { return; }
@@ -110,6 +146,15 @@ frappe.realtime.on('list_update', p => {
 </script>
 
 <style lang='less' scoped>
+.filter-form{
+	margin-bottom: 8px;
+	:deep(.el-form-item--small){
+		margin-bottom: 0;
+	}
+	:deep(label){
+		margin-bottom: 0;
+	}
+}
 .sider-container{
 	display: flex;
 	flex-direction: column;
@@ -119,7 +164,9 @@ frappe.realtime.on('list_update', p => {
 		margin-bottom: 8px;
 	}
 	.user-container{
-		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		overflow-y: hidden;
 	}
 	.activity{
 		color:#286840
