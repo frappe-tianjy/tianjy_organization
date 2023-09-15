@@ -7,6 +7,7 @@ app_description = "天玑组织 Tianjy Organization"
 app_email = "天玑 Tinajy"
 app_license = "MIT"
 
+after_migrate = 'tianjy_organization.migrate.run'
 
 app_include_css="/assets/tianjy_organization/css/tianjy_organization.css"
 app_include_js="tianjy_organization.bundle.js"
