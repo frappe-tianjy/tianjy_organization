@@ -21,6 +21,8 @@ override_whitelisted_methods = {
 	"frappe.desk.desktop.get_workspace_sidebar_items": "tianjy_organization.workspace.get_workspace_sidebar_items"
 }
 
+filters_config = "tianjy_organization.filter.get_filters_config"
+
 doc_events = {
 	"Tianjy Organization Inheritable": {
 		"on_update": "tianjy_organization.tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member.inheritable_on_update",
