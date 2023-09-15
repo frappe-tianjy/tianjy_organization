@@ -3,6 +3,7 @@
 """build query for doclistview and return results"""
 
 
+from typing import Any
 import frappe
 import frappe.defaults
 import frappe.permissions
@@ -53,7 +54,7 @@ def prepare_filter_condition(self: frappe.model.db_query.DatabaseQuery, f):
 		if organization and isinstance(organization, str): value.append(organization)
 	if not value: return '0 = 0'
 
-	filters = None
+	filters: dict[str, Any] | None = None
 	if operator in ('organization', 'organizations', 'not organization', 'not organizations'):
 		filters=dict(name=('in', value) if isinstance(value, list) else value)
 	elif value := frappe.db.get_value(TianjyOrganization.DOCTYPE, value, ["lft", "rgt"]):
@@ -61,11 +62,14 @@ def prepare_filter_condition(self: frappe.model.db_query.DatabaseQuery, f):
 		lft_o, rgt_o = [">=", "<="] if 'descendants' in operator else["<=", ">="];
 		filters=dict(lft=[lft_o, lft], rgt=[rgt_o, rgt])
 
-	documents = frappe.get_all(
-		TianjyOrganization.DOCTYPE,
-		filters=dict(**filters, doc_type=ref_doctype, document=('is', 'set')),
-		pluck='document',
-	) if filters else None
+	documents = []
+	if filters:
+		pluck='name'
+		if ref_doctype != TianjyOrganization.DOCTYPE:
+			filters['doc_type'] = ref_doctype
+			filters['document'] = ('is', 'set')
+			pluck='document'
+		documents = frappe.get_all(TianjyOrganization.DOCTYPE, filters=filters, pluck=pluck)
 
 	is_not = 'not ' in operator
 	if not documents: return '0 = 0' if is_not else '1 = 0'
