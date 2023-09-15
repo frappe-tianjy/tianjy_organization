@@ -1,9 +1,9 @@
 import EditorJS from "@editorjs/editorjs";
 import Undo from "editorjs-undo";
 import { blocks as guiguBlocks } from '../../../../../../../guigu/guigu/public/js/extends/patches/workspace/configDialogs';
-
-export default class Workspace {
+export default class Workspace extends frappe.views.Workspace {
 	constructor(wrapper, organization_name) {
+		super(wrapper);
 		this.wrapper = $(wrapper);
 		this.page = wrapper.page;
 		this.blocks = frappe.workspace_block.blocks;
@@ -25,6 +25,9 @@ export default class Workspace {
 	}
 
 	prepare_container() {
+		if(!this.organization_name){
+			return;
+		}
 		let list_sidebar = $(`
 			<div class="list-sidebar overlay-sidebar hidden-xs hidden-sm">
 				<div class="desk-sidebar list-unstyled sidebar-menu"></div>
@@ -35,6 +38,9 @@ export default class Workspace {
 	}
 
 	async setup_pages(reload) {
+		if(!this.organization_name){
+			return;
+		}
 		!this.discard && this.create_page_skeleton();
 		!this.discard && this.create_sidebar_skeleton();
 		this.sidebar_pages = !this.discard ? await this.get_pages() : this.sidebar_pages;
@@ -1410,9 +1416,6 @@ export default class Workspace {
 			spacer: this.blocks["spacer"],
 			HeaderSize: frappe.workspace_block.tunes["header_size"],
 		};
-		for (const [k, c] of frappe.guigu.blocks) {
-			this.tools[k] = c;
-		}
 		this.editor = new EditorJS({
 			data: {
 				blocks: blocks || [],
@@ -1525,6 +1528,9 @@ export default class Workspace {
 	}
 
 	register_awesomebar_shortcut() {
+		if(!this.organization_name){
+			return;
+		}
 		"abcdefghijklmnopqrstuvwxyz".split("").forEach((letter) => {
 			const default_shortcut = {
 				action: (e) => {
