@@ -6,6 +6,7 @@
 			:meta="meta"
 			:options="{}"
 			:value="detail"
+			isHideClose
 		></FormDetail>
 	</div>
 </template>
