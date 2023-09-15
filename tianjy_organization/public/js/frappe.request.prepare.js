@@ -1,12 +1,12 @@
-// TODO: 等重构的组织获取接口
+// 增加当前组织的
 
-function getOrganizationName() {
-	return frappe.defaults.get_user_default('Tianjy Organization');
-}
+import * as store from './store';
+
+
 const old = frappe.request.prepare;
 frappe.request.prepare = function (opts) {
 	old.call(this, ...arguments);
-	const organization = getOrganizationName();
+	const organization = store.getCurrent();
 	if (!organization) { return; }
 	if (opts.headers) {
 		opts.headers['X-Tianjy-Organization'] = organization;

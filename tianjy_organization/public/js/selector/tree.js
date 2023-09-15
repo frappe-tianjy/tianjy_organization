@@ -7,7 +7,29 @@
  * @property {string} [parent]
  */
 
-import setOrganization from './setOrganization';
+import * as store from '../store';
+
+
+/**
+ *
+ * @param {TreeNode} node
+ * @param {string} [organization]
+ */
+function create(node, organization) {
+	const { name } = node;
+	const title = document.createElement('a');
+	title.appendChild(document.createTextNode(node.label));
+	title.href = '#';
+	if (name === organization) {
+		title.classList.add('tianjy-organization-list-current');
+	}
+	title.addEventListener('click', e => {
+		e.preventDefault();
+		store.setCurrent(name);
+		location.reload();
+	});
+	return title;
+}
 
 /**
  *
@@ -15,20 +37,11 @@ import setOrganization from './setOrganization';
  * @param {string} [organization]
  */
 export function createDom(node, organization) {
-	const { children, name } = node;
+	const { children } = node;
 	if (!children?.length) {
 		const head = document.createElement('li');
 		// TODO: 展开/收起 占位符
-		const title = head.appendChild(document.createElement('a'));
-		title.appendChild(document.createTextNode(node.label));
-		title.href = '#';
-		if (name === organization) {
-			title.classList.add('tianjy-organization-list-current');
-		}
-		title.addEventListener('click', e => {
-			e.preventDefault();
-			setOrganization(name);
-		});
+		head.appendChild(create(node, organization));
 
 		return head;
 	}
@@ -41,16 +54,7 @@ export function createDom(node, organization) {
 		root.classList.toggle('tianjy-organization-list-tree-folded');
 	});
 	// TODO: 展开/收起
-	const title = head.appendChild(document.createElement('a'));
-	title.appendChild(document.createTextNode(node.label));
-	title.href = '#';
-	if (name === organization) {
-		title.classList.add('tianjy-organization-list-current');
-	}
-	title.addEventListener('click', e => {
-		e.preventDefault();
-		setOrganization(name);
-	});
+	head.appendChild(create(node, organization));
 
 	const ul = root.appendChild(document.createElement('ul'));
 	for (const child of children) {
@@ -65,10 +69,11 @@ export function createDom(node, organization) {
 export default function createTree(list) {
 
 	/** @type {string | undefined} */
-	const organization = frappe.defaults.get_user_default('Tianjy Organization');
+	const organization = store.getCurrent();
 	/** @type {Map<string, TreeNode[]>} */
 	const map = new Map();
 	for (const node of list) {
+		/** @type {TreeNode[]} */
 		const children = [];
 		node.children = children;
 		map.set(node.name, children);
