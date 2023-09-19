@@ -6,7 +6,7 @@
 		</div>
 		<div class="user-container">
 			<div>
-				<ElForm class="filter-form" :inline="true" :model="filterForm">
+				<ElForm class="filter-form" inline :model="filterForm">
 					<el-form-item label="状态" clearable>
 						<ElSelect v-model="filterForm.enabled">
 							<el-option key="1" label="激活" :value="1"/>
@@ -22,19 +22,19 @@
 					</el-form-item>
 				</ElForm>
 			</div>
-			<el-table 
+			<el-table
 				ref="tableRef"
-				:data="userList" 
-				:border="true" 
-				style="width: 100%" 
+				:data="userList"
+				border
+				style="width: 100%"
 				height="100%"
-				highlight-current-row
-				current-row-key="name"
+				highlightCurrentRow
+				currentRowKey="name"
 				@current-change="handleCurrentChange"
 			>
 				<el-table-column fixed prop="full_name" label="用户" >
 				</el-table-column>
-				<el-table-column prop="email" label="邮箱"  width="180"></el-table-column>
+				<el-table-column prop="email" label="邮箱" width="180"></el-table-column>
 				<el-table-column prop="enabled" label="状态" width="60" >
 					<template #default="scope">
 						<div :class="{activity:scope.row.enabled}">{{ scope.row.enabled?'激活':'禁用' }}</div>
@@ -53,8 +53,9 @@
 
 <script setup lang='ts'>
 import { ref, onMounted, computed, toRaw, watch, reactive} from 'vue';
-import type { User, Permissions } from '../type';
 import { ElMessageBox, ElMessage, ElInput } from 'element-plus';
+
+import type { User, Permissions } from '../type';
 
 interface Props{
 	modelValue?:User
@@ -68,33 +69,33 @@ interface Emit{
 }
 const emit = defineEmits<Emit>();
 const userList = ref<User[]>([]);
-const tableRef = ref<any>()
+const tableRef = ref<any>();
 const filterForm = reactive({
 	enabled:'',
-	full_name:''
-})
+	full_name:'',
+});
 onMounted(()=>{
 	getUsers();
-})
+});
 
 async function getUsers(){
-	emit('update:loading', true)
-	const filters = Object.entries(filterForm).map(([key,value])=>{
-		if(value===''){return}
-		if(key==='enable'){ return [key,'=', value] }
-		return [key,'like', `%${value}%`]
-	}).filter(Boolean) as [string, string,any]
-	const res = await frappe.db.get_list<User>('User',{filters, limit:0, fields:['*'], order_by:'full_name asc'})
-	userList.value = res||[]
-	emit('update:modelValue', userList.value[0])
-	emit('update:loading', false)
+	emit('update:loading', true);
+	const filters = Object.entries(filterForm).map(([key, value])=>{
+		if (value===''){ return; }
+		if (key==='enable'){ return [key, '=', value]; }
+		return [key, 'like', `%${value}%`];
+	}).filter(Boolean) as [string, string, any];
+	const res = await frappe.db.get_list<User>('User', {filters, limit:0, fields:['*'], order_by:'full_name asc'});
+	userList.value = res||[];
+	emit('update:modelValue', userList.value[0]);
+	emit('update:loading', false);
 }
 watch([userList, tableRef.value], ()=>{
-	if(!tableRef.value||!userList.value.length){return}
-	tableRef.value.setCurrentRow(userList.value[0])
-})
+	if (!tableRef.value||!userList.value.length){ return; }
+	tableRef.value.setCurrentRow(userList.value[0]);
+});
 function handleCurrentChange(value: User){
-	emit('update:modelValue', value)
+	emit('update:modelValue', value);
 }
 
 function createUser(){
@@ -104,37 +105,37 @@ function createUser(){
 
 function deleteUser(user:User){
 	ElMessageBox.confirm(
-			'您确认删除此人员吗?',
-			'请确认',
-			{
-				confirmButtonText: '确定',
-				cancelButtonText: '取消',
-				type: 'warning',
-			}
-		).then(async () => {
-			emit('update:loading', true)
-			await frappe.db.delete_doc('User', user.name)
-			emit('update:loading', false)
-			getUsers()
-			ElMessage({
-				type: 'success',
-				message: '删除成功',
-			});
-		}).catch(() => {
-			ElMessage({
-				type: 'info',
-				message: '取消删除',
-			});
+		'您确认删除此人员吗?',
+		'请确认',
+		{
+			confirmButtonText: '确定',
+			cancelButtonText: '取消',
+			type: 'warning',
+		},
+	).then(async () => {
+		emit('update:loading', true);
+		await frappe.db.delete_doc('User', user.name);
+		emit('update:loading', false);
+		getUsers();
+		ElMessage({
+			type: 'success',
+			message: '删除成功',
 		});
+	}).catch(() => {
+		ElMessage({
+			type: 'info',
+			message: '取消删除',
+		});
+	});
 }
 
 function applyFilter(){
-	getUsers()
+	getUsers();
 }
 function clearFilter(){
-	filterForm.enabled = ''
-	filterForm.full_name = ''
-	getUsers()
+	filterForm.enabled = '';
+	filterForm.full_name = '';
+	getUsers();
 }
 frappe.socketio.doctype_subscribe('User');
 frappe.realtime.on('list_update', p => {
@@ -147,9 +148,8 @@ frappe.realtime.on('list_update', p => {
 
 <style lang='less' scoped>
 .filter-form{
-	margin-bottom: 8px;
 	:deep(.el-form-item--small){
-		margin-bottom: 0;
+		margin-bottom: 8px;
 	}
 	:deep(label){
 		margin-bottom: 0;

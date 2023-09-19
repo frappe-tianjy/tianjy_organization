@@ -1,38 +1,35 @@
 <template>
-	<div 
-		ref="wrapperRef" 
-		class="content page-container" 
-		id="page-Workspaces" 
+	<div
+		ref="wrapperRef"
+		class="content page-container"
+		id="page-Workspaces"
 		data-page-route="Workspaces"
 	>
 	</div>
 </template>
 
 <script setup lang='ts'>
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
+
 import Workspace from './workspace.js';
 
 interface Props{
 	organization:string
 }
 const props = defineProps<Props>();
-interface Emit{
+const wrapperRef = ref<HTMLElement>();
 
-}
-const emit = defineEmits<Emit>();
-const wrapperRef = ref<HTMLElement>()
-
-watch([wrapperRef, ()=>props.organization],(_, org)=>{
-	if(!wrapperRef.value||!props.organization){return;}
+watch([wrapperRef, ()=>props.organization], (_, org)=>{
+	if (!wrapperRef.value||!props.organization){ return; }
 	wrapperRef.value.innerHTML = '';
 	frappe.ui.make_app_page({
 		parent: wrapperRef.value,
-		name: "Workspaces",
-		title: __("Workspace"),
+		name: 'Workspaces',
+		title: __('Workspace'),
 	});
 	const workspace = new Workspace(wrapperRef.value, props.organization);
-	workspace.show()
-}, {immediate: true})
+	workspace.show();
+}, {immediate: true});
 </script>
 
 <style lang='less' scoped>

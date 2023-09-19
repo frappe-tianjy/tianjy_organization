@@ -4,7 +4,7 @@
 			<div>组织设置</div>
 		</template>
 		<template #sider>
-			<OrganizationTree 
+			<OrganizationTree
 				v-model="organization"
 				:permissions="organizationPermissions"
 			></OrganizationTree>
@@ -28,21 +28,16 @@
 
 <script setup lang='ts'>
 import { computed, onMounted, ref } from 'vue';
+
 import Page from '../../../../../../guigu_pm/guigu_pm/public/js/components/page/index.vue';
-import OrganizationTree from './components/OrganizationTree.vue'
+
+import OrganizationTree from './components/OrganizationTree.vue';
 import type { Organization, OrganizationType } from './type';
-import FormDetail from './components/Detail.vue'
-import Workspace from './components/Workspace.vue'
-import Member from './components/Member.vue'
-import Inherit from './components/Inherit.vue'
-interface Props{
+import FormDetail from './components/Detail.vue';
+import Workspace from './components/Workspace.vue';
+import Member from './components/Member.vue';
+import Inherit from './components/Inherit.vue';
 
-}
-const props = defineProps<Props>();
-interface Emit{
-
-}
-const emit = defineEmits<Emit>();
 const organization = ref<Organization>();
 const activeName = ref<string>('info');
 const organizationMeta = ref<locals.DocType>();
@@ -51,10 +46,10 @@ const inheritMeta = ref<locals.DocType>();
 
 
 onMounted(async()=>{
-	organizationMeta.value = await getMeta('Tianjy Organization')
-	memberMeta.value = await getMeta('Tianjy Organization Member')
-	inheritMeta.value = await getMeta('Tianjy Organization Inheritable')
-})
+	organizationMeta.value = await getMeta('Tianjy Organization');
+	memberMeta.value = await getMeta('Tianjy Organization Member');
+	inheritMeta.value = await getMeta('Tianjy Organization Inheritable');
+});
 async function getMeta(doctype:string) {
 	let local_meta = frappe.get_meta(doctype);
 	if (local_meta) {
@@ -73,15 +68,9 @@ function getPermission(meta?:locals.DocType){
 	const writePermission = frappe.perm.has_perm(meta.name, 0, 'write');
 	return { deletePermission, createPermission, writePermission };
 }
-const organizationPermissions = computed(() => {
-	return getPermission(organizationMeta.value)
-});
-const memberPermissions = computed(() => {
-	return getPermission(memberMeta.value)
-});
-const inheritPermissions = computed(() => {
-	return getPermission(inheritMeta.value)
-});
+const organizationPermissions = computed(() => getPermission(organizationMeta.value));
+const memberPermissions = computed(() => getPermission(memberMeta.value));
+const inheritPermissions = computed(() => getPermission(inheritMeta.value));
 
 </script>
 

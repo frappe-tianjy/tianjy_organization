@@ -1,9 +1,9 @@
 <template>
-	<div class="inheritable-organization " v-loading="loading">	
+	<div class="inheritable-organization " v-loading="loading">
 		<div class="btn-container">
 			<ElButton v-if="permissions.createPermission" type="primary" @click="createInherit">继承组织</ElButton>
 		</div>
-		<el-table :data="inheritList" :border="true" style="width: 100%" height="100%">
+		<el-table :data="inheritList" border style="width: 100%" height="100%">
 			<el-table-column prop="inherit_from_organization_doc.label" label="继承自" ></el-table-column>
 			<el-table-column prop="visible" label="可见" width="60" >
 				<template #default="scope">
@@ -48,38 +48,35 @@
 
 <script setup lang='ts'>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import type { InheritOrganization, Permissions } from '../type';
 import { ElMessageBox, ElMessage } from 'element-plus';
+
+import type { InheritOrganization, Permissions } from '../type';
 
 interface Props{
 	organization:string
 	permissions:Permissions
 }
 const props = defineProps<Props>();
-interface Emit{
-
-}
-const emit = defineEmits<Emit>();
-const inheritList = ref<InheritOrganization[]>([])
+const inheritList = ref<InheritOrganization[]>([]);
 const loading = ref<boolean>(false);
 
 watch(()=>props.organization, ()=>{
-	getInherits()
-}, {immediate: true})
+	getInherits();
+}, {immediate: true});
 
 async function getInherits(){
-	if(!props.organization){
+	if (!props.organization){
 		return;
 	}
-	loading.value = true
+	loading.value = true;
 	const res = await frappe.call<{ message: InheritOrganization[] }>({
 		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_config.tianjy_organization_config.get_inherit',
 		args:{
-			organization_name:props.organization
-		}
+			organization_name:props.organization,
+		},
 	});
-	inheritList.value = res?.message||[]
-	loading.value = false
+	inheritList.value = res?.message||[];
+	loading.value = false;
 }
 
 function createInherit(){
@@ -93,27 +90,27 @@ function editInherit(inheritOrganization:InheritOrganization){
 }
 function deleteInherit(inheritOrganization:InheritOrganization){
 	ElMessageBox.confirm(
-			'您确认删除此人员吗?',
-			'请确认',
-			{
-				confirmButtonText: '确定',
-				cancelButtonText: '取消',
-				type: 'warning',
-			}
-		).then(async () => {
-			loading.value = true
-			await frappe.db.delete_doc('Tianjy Organization Inheritable', inheritOrganization.name)
-			getInherits()
-			ElMessage({
-				type: 'success',
-				message: '删除成功',
-			});
-		}).catch(() => {
-			ElMessage({
-				type: 'info',
-				message: '取消删除',
-			});
+		'您确认删除此人员吗?',
+		'请确认',
+		{
+			confirmButtonText: '确定',
+			cancelButtonText: '取消',
+			type: 'warning',
+		},
+	).then(async () => {
+		loading.value = true;
+		await frappe.db.delete_doc('Tianjy Organization Inheritable', inheritOrganization.name);
+		getInherits();
+		ElMessage({
+			type: 'success',
+			message: '删除成功',
 		});
+	}).catch(() => {
+		ElMessage({
+			type: 'info',
+			message: '取消删除',
+		});
+	});
 }
 
 frappe.socketio.doctype_subscribe('Tianjy Organization Inheritable');

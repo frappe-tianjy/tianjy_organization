@@ -3,7 +3,7 @@
 		<div class="btn-container" v-if="permissions.createPermission">
 			<ElButton type="primary" @click="joinOrganization">加入组织</ElButton>
 		</div>
-		<el-table :data="organizationList" :border="true" style="width: 100%" height="100%">
+		<el-table :data="organizationList" border style="width: 100%" height="100%">
 			<el-table-column fixed prop="organization_doc.label" label="组织" width="180" />
 			<el-table-column prop="role_list" label="角色" >
 				<template #default="scope">
@@ -41,7 +41,7 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column  v-if="permissions.writePermission||permissions.deletePermission"  prop="address" label="操作" width="180" >
+			<el-table-column v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" width="180" >
 				<template #default="scope">
 					<ElButton v-if="permissions.writePermission" type="primary" @click="editOrganization(scope.row)">编辑</ElButton>
 					<ElButton v-if="permissions.deletePermission" type="danger" @click="outOrganization(scope.row)">退出</ElButton>
@@ -53,35 +53,32 @@
 
 <script setup lang='ts'>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { Organization, Permissions } from '../type';
 import { ElMessage, ElMessageBox } from 'element-plus';
+
+import type { Organization, Permissions } from '../type';
 const tt = __;
 interface Props{
 	user:string,
 	permissions:Permissions
 }
 const props = defineProps<Props>();
-interface Emit{
-
-}
-const emit = defineEmits<Emit>();
 const organizationList = ref<Organization[]>([]);
 const loading = ref<boolean>(false);
 watch(()=>props.user, ()=>{
-	getOrganizations()
-}, {immediate:true})
+	getOrganizations();
+}, {immediate:true});
 async function getOrganizations(){
-	if(!props.user){
+	if (!props.user){
 		return;
 	}
 	loading.value=true;
 	const res = await frappe.call<{ message: Organization[] }>({
 		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_members.tianjy_organization_members.get_organizations',
 		args:{
-			user_name:props.user
-		}
+			user_name:props.user,
+		},
 	});
-	organizationList.value = res?.message||[]
+	organizationList.value = res?.message||[];
 	loading.value=false;
 }
 
@@ -96,28 +93,28 @@ function editOrganization(organization:Organization){
 }
 function outOrganization(organization:Organization){
 	ElMessageBox.confirm(
-			'您确认退出此组织吗?',
-			'请确认',
-			{
-				confirmButtonText: '确定',
-				cancelButtonText: '取消',
-				type: 'warning',
-			}
-		).then(async () => {
-			loading.value=true;
-			await frappe.db.delete_doc('Tianjy Organization Member', organization.name)
-			loading.value=false;
-			getOrganizations()
-			ElMessage({
-				type: 'success',
-				message: '退出成功',
-			});
-		}).catch(() => {
-			ElMessage({
-				type: 'info',
-				message: '取消退出',
-			});
+		'您确认退出此组织吗?',
+		'请确认',
+		{
+			confirmButtonText: '确定',
+			cancelButtonText: '取消',
+			type: 'warning',
+		},
+	).then(async () => {
+		loading.value=true;
+		await frappe.db.delete_doc('Tianjy Organization Member', organization.name);
+		loading.value=false;
+		getOrganizations();
+		ElMessage({
+			type: 'success',
+			message: '退出成功',
 		});
+	}).catch(() => {
+		ElMessage({
+			type: 'info',
+			message: '取消退出',
+		});
+	});
 }
 
 frappe.socketio.doctype_subscribe('Tianjy Organization Member');
