@@ -45,6 +45,8 @@ def prepare_filter_condition(self: frappe.model.db_query.DatabaseQuery, f):
 	if tname not in self.tables:
 		self.append_table(tname)
 
+	if 'organizations' in operator and isinstance(value, str):
+		value = [v for v in set(value.split(',')) if v]
 	if value == '~':
 		organization = frappe.get_request_header('X-Tianjy-Organization', "")
 		value = organization if isinstance(organization, str) else ''
