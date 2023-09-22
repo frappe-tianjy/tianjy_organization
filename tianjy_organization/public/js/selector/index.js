@@ -49,7 +49,6 @@ async function addProjectSelect() {
 			title: __('Switch Organization'),
 			primary_action_label: __('Close'),
 		});
-		console.log(dialog);
 		/** @type {HTMLElement}  */
 		const p = dialog.body;
 		p.className = 'tianjy-organization-list';

@@ -9,6 +9,23 @@
 
 import * as store from '../store';
 
+/**
+ *
+ * @param {string} organization
+ */
+async function setCurrent(organization) {
+	store.setCurrent(organization);
+	try {
+		const method = 'tianjy_organization.lib.get_default_workspace';
+		const v = await frappe.call(method, { organization });
+		const workspace = v?.message;
+		if (workspace) {
+			location.href = `/app/${encodeURIComponent(workspace)}`;
+			return;
+		}
+	} catch {}
+	location.reload();
+}
 
 /**
  *
@@ -25,8 +42,7 @@ function create(node, organization) {
 	}
 	title.addEventListener('click', e => {
 		e.preventDefault();
-		store.setCurrent(name);
-		location.reload();
+		setCurrent(name);
 	});
 	return title;
 }
