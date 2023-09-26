@@ -155,11 +155,13 @@ def get_user_organization_doc_names_by_doctype_permission(
 	user: str | None = None,
 ) -> list[str]:
 	"""获取用户在特定 DocType 内有权限的组织关联的特定类型文档名称列表"""
+	organizations = get_user_organizations_by_doctype_permission(doctype, user)
+	if not organizations: return [];
 	Table = DocType(TianjyOrganization.DOCTYPE)
 	q = frappe.qb.from_(Table)
 	q = q.select('document')
 	q = q.where(
-		Table.name.isin(get_user_organizations_by_doctype_permission(doctype, user))
+		Table.name.isin(organizations)
 		& (Table.doc_type == doc_type)
 	)
 	return q.run(pluck=True)
