@@ -30,8 +30,8 @@ function setParentOrganizationNull(frm) {
 	frm.set_query('parent_organization', () => ({ filters: [['type', 'in', []]] }));
 	frm.set_df_property('parent_organization', 'hidden', true);
 	frm.set_df_property('parent_organization', 'reqd', true);
-	frm.set_value('parent_organization', null);
-	frm.set_value('doc_type', null);
+	if (frm.doc.parent_organization) { frm.set_value('parent_organization', null); }
+	if (frm.doc.doc_type) { frm.set_value('doc_type', null); }
 }
 async function typeUpdated(frm) {
 	const currentType = frm.doc.type;
@@ -45,10 +45,8 @@ async function typeUpdated(frm) {
 	frm.set_df_property('parent_organization', 'hidden', rootOnly);
 	frm.set_df_property('doc_type', 'hidden', !type.doc_types?.length);
 	frm.set_df_property('parent_organization', 'reqd', !rootOnly && !type.root_only);
-	if (rootOnly) {
-		frm.set_value('parent_organization', null);
-	}
-	if (!type.doc_types?.length || !type.doc_types.includes(frm.doc.doc_type)) {
+	if (rootOnly && frm.doc.parent_organization) { frm.set_value('parent_organization', null); }
+	if ((!type.doc_types?.length || !type.doc_types.includes(frm.doc.doc_type)) && frm.doc.doc_type) {
 		frm.set_value('doc_type', null);
 	}
 }
@@ -69,10 +67,10 @@ frappe.ui.form.on('Tianjy Organization', {
 	},
 	doc_type(frm) {
 		const has = Boolean(frm.doc.doc_type);
-		frm.set_df_property('docmenut', 'reqd', has);
-		frm.set_df_property('docmenut', 'hidden', !has);
-		if (!has) {
-			frm.set_value('doc_type', null);
+		frm.set_df_property('document', 'reqd', has);
+		frm.set_df_property('document', 'hidden', !has);
+		if (!has && frm.doc.document) {
+			frm.set_value('document', null);
 		}
 
 	},
