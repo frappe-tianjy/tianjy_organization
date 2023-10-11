@@ -60,6 +60,21 @@ def get_organization_members(organization:str, type: member_type = 'visible') ->
 	return [v[0] for v in frappe.db.sql(organization_members_sql(organization, type))]
 
 
+def get_organization_field(doctype):
+	"""获取 DocType 组织字段配置信息"""
+	try:
+		meta = frappe.get_meta(doctype)
+		fieldname = meta.get('tianjy_organization_field', '')
+		if not fieldname: return
+		fields = meta.get('fields', {'fieldname': fieldname, 'fieldtype': 'Link'})
+		if not fields: return
+		field = fields[0]
+
+		options = field.options
+		return [fieldname, None if options == 'Tianjy Organization' else options]
+	except:
+		...
+
 
 def get_roles(
 	organization: str | list[str] | set[str],
@@ -166,12 +181,7 @@ def get_user_organization_doc_names_by_doctype_permission(
 	)
 	return q.run(pluck=True)
 
-def get_permission_query_conditions(
-	doctype: str,
-	user: str | None = None,
-	field: str = 'organization',
-	doc_type: str | None = None,
-):
+def get_permission_query_conditions(doctype: str, user: str | None = None, *args,**argv):
 	"""
 	获取列表查询条件
 	e.g.
@@ -181,7 +191,7 @@ def get_permission_query_conditions(
 	import tianjy_organization
 	def get_permission_query_conditions(user):
 		# 注意指明 doctype 参数为当前 doctype
-		return tianjy_organization.get_permission_query_conditions('Test Doctype', user, 'organization')
+		return tianjy_organization.get_permission_query_conditions('Test Doctype', user)
 	```
 	### hooks.py 文件定义钩子
 
@@ -192,6 +202,9 @@ def get_permission_query_conditions(
 	}
 	```
 	"""
+	field_info = get_organization_field(doctype)
+	if not field_info: return
+	field, doc_type = field_info
 	user = _get_user(user)
 	if user == 'Administrator': return
 
@@ -318,33 +331,21 @@ def _has_permission_by_organization(
 	return False
 
 
-def has_permission(
-	doc: Document,
-	ptype,
-	user,
-	field: str = 'organization',
-	doc_type: str | None = None,
-):
+def has_permission(doc: Document, ptype, user, *args,**argv):
 	"""
 	判断是否有指定权限
-	e.g.
-
-	### Test Doctype 自定义的 has_permission 函数
-	```python
-	import tianjy_organization
-	def has_permission(doc, ptype, user):
-		# 注意指明 doctype 参数为当前 doctype
-		return tianjy_organization.has_permission(doc, ptype, user, 'organization')
-	```
 	### hooks.py 文件定义钩子
 
 	```python
 	has_permission = {
-		## 使用上面自定义的钩子
-		"Test Doctype": ".....has_permission",
+		"Test Doctype": "tianjy_organization.has_permission",
 	}
 	```
 	"""
+	field_info = get_organization_field(doc.doctype)
+	if not field_info: return
+	field, doc_type = field_info
+
 	if user == 'Administrator': return
 	value: Any = doc.get(field) or None
 	organization: str | list[str] = get_bind_organizations(doc_type, value) if doc_type else value or []
