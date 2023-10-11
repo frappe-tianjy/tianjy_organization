@@ -158,7 +158,7 @@ class TianjyOrganizationMember(Document):
         if self.is_new():
             # 新建时，将继承设置为自身组织
             self.inherit_from = self.organization  # type: ignore
-            self.is_inherit = 0
+            self.is_inherit = '0'
 
     def validate(self):
         # 如果是继承的，则禁止用户修改
