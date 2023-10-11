@@ -2,10 +2,10 @@
 	<div v-loading="loading">
 		<Page :siderStyle="{width:'620px'}">
 			<template #title>
-				<div>组织人员</div>
+				<h3 class="title">组织人员</h3>
 			</template>
 			<template #sider>
-				<Users 
+				<Users
 					v-model:loading="loading"
 					v-model="user"
 					:permissions="userPermissions"
@@ -26,26 +26,28 @@
 
 <script setup lang='ts'>
 import { computed, onMounted, ref } from 'vue';
+
 import Page from '../../../../../../guigu_pm/guigu_pm/public/js/components/page/index.vue';
-import Users from './components/Users.vue'
-import FormDetail from './components/Detail.vue'
-import Organization from './components/Organization.vue'
+
+import Users from './components/Users.vue';
+import FormDetail from './components/Detail.vue';
+import Organization from './components/Organization.vue';
 import type { User } from './type';
 
 const user = ref<User>();
 const activeName = ref<string>('info');
 const userMeta = ref<locals.DocType>();
 const memberMeta = ref<locals.DocType>();
-const loading = ref<boolean>(true)
+const loading = ref<boolean>(true);
 
 onMounted(async ()=>{
-	userMeta.value = await getMeta('User')
-	memberMeta.value = await getMeta('Tianjy Organization Member')
-})
+	userMeta.value = await getMeta('User');
+	memberMeta.value = await getMeta('Tianjy Organization Member');
+});
 async function getMeta(doctype:string) {
 	let local_meta = frappe.get_meta(doctype);
 	if (local_meta) {
-		return local_meta
+		return local_meta;
 	}
 	await frappe.model.with_doctype(doctype);
 	local_meta = frappe.get_meta(doctype);
@@ -61,15 +63,14 @@ function getPermission(meta:locals.DocType){
 	const writePermission = frappe.perm.has_perm(meta.name, 0, 'write');
 	return { deletePermission, createPermission, writePermission };
 }
-const userPermissions = computed(() => {
-	return getPermission(userMeta.value)
-});
-const memberPermissions = computed(() => {
-	return getPermission(memberMeta.value)
-});
+const userPermissions = computed(() => getPermission(userMeta.value));
+const memberPermissions = computed(() => getPermission(memberMeta.value));
 </script>
 
 <style lang='less' scoped>
+.title{
+	margin-bottom: 0;
+}
 .user-tabs{
 	height: 100%;
     display: flex;

@@ -1,7 +1,7 @@
 <template>
 	<Page>
 		<template #title>
-			<div>组织设置</div>
+			<h3 class="title">组织设置</h3>
 		</template>
 		<template #sider>
 			<OrganizationTree
@@ -13,7 +13,7 @@
 			<el-tab-pane class="tab-container" label="基本信息" name="info">
 				<FormDetail :name="organization?.name" doctype="Tianjy Organization"></FormDetail>
 			</el-tab-pane>
-			<el-tab-pane class="tab-container" label="工作区" name="workspace">
+			<el-tab-pane v-if="organization?.type_doc.no_workspace===0" class="tab-container" label="工作区" name="workspace">
 				<Workspace v-if="organization" :organization="organization.name"></Workspace>
 			</el-tab-pane>
 			<el-tab-pane class="tab-container" label="成员" name="users">
@@ -75,6 +75,9 @@ const inheritPermissions = computed(() => getPermission(inheritMeta.value));
 </script>
 
 <style lang='less' scoped>
+.title{
+	margin-bottom: 0;
+}
 .organization-tabs{
 	height: 100%;
     display: flex;

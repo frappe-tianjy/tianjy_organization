@@ -176,6 +176,7 @@ def get_pages(organization_name):
         Workspace.module.as_("module"),
         Workspace.icon.as_("icon"),
         Workspace.is_hidden.as_("is_hidden"),
+        OrganizationWorkspace.default.as_("default"),
         OrganizationWorkspace.organization.as_('organization'),
     ).left_join(OrganizationWorkspace).on(Workspace.name == OrganizationWorkspace.workspace)
     where = OrganizationWorkspace.organization == organization_name
@@ -213,7 +214,7 @@ def get_workspace_sidebar_items(organization_name):
     if len(pages) == 0:
         organization = frappe.get_doc('Tianjy Organization', organization_name)
         workspace = frappe.new_doc("Workspace")
-        workspace.title = "{label}默认工作区".format(label=organization.label)
+        workspace.title = label = organization.label
         workspace.content = dumps([{
             "type": "header",
             "data": {"text": organization.label}

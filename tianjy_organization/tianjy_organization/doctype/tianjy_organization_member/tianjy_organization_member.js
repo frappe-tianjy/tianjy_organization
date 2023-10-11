@@ -68,7 +68,7 @@ async function createEditor(frm, user, organization) {
 	const k = id;
 	const [allRoles, roles] = await Promise.all([
 		getAllRoles(),
-		getUserOrganizationRoles(user, organization)
+		getUserOrganizationRoles(user, organization),
 	]);
 	if (k !== id) { return; }
 
@@ -92,11 +92,19 @@ async function createEditor(frm, user, organization) {
 			this.hide();
 			await saveUserOrganizationRoles(user, organization, this.get_value('roles'));
 			const roles = await frappe.db.get_list('Tianjy Organization Role',
-                                     {filters:{
-                                         'user': user, 'organization': organization},
-                                     fields:[
-                                         'user', 'organization', 'role', 'name']})
-			frm.set_value('roles', roles)					
+				{filters:{
+					'user': user, 'organization': organization},
+				fields:[
+					'user', 'organization', 'role', 'name'],
+				limit:0});
+			frm.set_value('roles', roles, false, true);
+			const role_grid = frm.fields_dict.roles.grid;
+			frm.refresh_field('roles');
+			if (
+				role_grid.data.length>role_grid.grid_pagination.page_length
+			) {
+				role_grid.wrapper.find('.grid-footer').toggle(true);
+			}
 		},
 		primary_action_label: __('Update'),
 	});
@@ -118,7 +126,7 @@ async function createEditor(frm, user, organization) {
 
 frappe.ui.form.on('Tianjy Organization Member', {
 	role_editor(frm) {
-		const doc = frm.doc;
+		const {doc} = frm;
 		createEditor(frm, doc.user, doc.organization);
 		frm.refresh_field('roles');
 	},
@@ -135,5 +143,5 @@ frappe.ui.form.on('Tianjy Organization Member', {
 			if (field.read_only || field.set_only_once || field.read_only_depends_on) { continue; }
 			frm.set_df_property(field.fieldname, 'read_only', disabled);
 		}
-	}
+	},
 });

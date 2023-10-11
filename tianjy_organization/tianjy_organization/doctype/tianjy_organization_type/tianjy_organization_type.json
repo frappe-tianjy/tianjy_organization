@@ -9,7 +9,8 @@
  "field_order": [
   "root_only",
   "parent_types",
-  "doc_types"
+  "doc_types",
+  "no_workspace"
  ],
  "fields": [
   {
@@ -29,11 +30,17 @@
    "fieldtype": "Table",
    "label": "Doc Types",
    "options": "Tianjy Organization DocType List"
+  },
+  {
+   "default": "0",
+   "fieldname": "no_workspace",
+   "fieldtype": "Check",
+   "label": "No Workspace"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-20 09:42:30.787762",
+ "modified": "2023-10-11 13:27:18.209690",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization Type",
@@ -56,5 +63,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "tianjy_organization_filter_method": "Equal"
 }

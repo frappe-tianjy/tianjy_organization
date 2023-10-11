@@ -8,7 +8,8 @@ export interface Organization{
 	work_space:OrganizationWorkspace[],
 	child_type_list?:OrganizationType[],
 	parent_type_list?:OrganizationType[],
-	permissions?:Permissions
+	permissions?:Permissions,
+	type_doc:any,
 }
 
 export interface OrganizationWorkspace{
@@ -30,8 +31,8 @@ export interface ParentType{
 }
 
 export interface Permissions{
-	deletePermission: boolean, 
-	createPermission: boolean, 
+	deletePermission: boolean,
+	createPermission: boolean,
 	writePermission: boolean
 }
 
