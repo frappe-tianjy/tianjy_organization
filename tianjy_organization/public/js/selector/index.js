@@ -1,4 +1,6 @@
 // @ts-check
+import * as store from '../store';
+
 import createTree from './tree';
 
 const { Toolbar } = frappe.ui.toolbar;
@@ -7,7 +9,7 @@ const old_make = Toolbar.prototype.make;
 
 
 async function getOrganizationName() {
-	const organization = frappe.defaults.get_user_default('Tianjy Organization');
+	const organization = store.getCurrent();
 	if (!organization) { return; }
 	try {
 		const { message } = await frappe.call('frappe.desk.search.get_link_title', {
@@ -47,7 +49,6 @@ async function addProjectSelect() {
 			title: __('Switch Organization'),
 			primary_action_label: __('Close'),
 		});
-		console.log(dialog);
 		/** @type {HTMLElement}  */
 		const p = dialog.body;
 		p.className = 'tianjy-organization-list';

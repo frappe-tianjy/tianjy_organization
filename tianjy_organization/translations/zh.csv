@@ -3,6 +3,14 @@ Tianjy Organization,组织,
 Tianjy Organization Member,组织成员,
 Tianjy Organization Role,组织角色,
 Tianjy Organization Workspace,组织工作区,
+Organization Related,关联组织是,
+Not Organization Related,关联组织不是,
+Organizations Related In,关联组织属于,
+Not Organizations Related In,关联组织不属于,
+Organizations Related Ancestors,关联组织是...的祖先或自身,
+Not Organizations Related Ancestors,关联组织不是...的祖先及自身,
+Organizations Related Descendants,关联组织是....的后代或自身,
+Not Organizations Related Descendants,关联组织不是....的后代及自身,
 Copy Roles Only,仅复制角色,
 Synchronous Deletion,同步删除,
 Visible,可见,
@@ -14,4 +22,5 @@ Manageable,可管理,
 Edit Roles,编辑角色,
 Switch Organization,切换组织
 Select Organization,选择组织
+Current Organization,当前组织
 Work Space,工作区菜单
