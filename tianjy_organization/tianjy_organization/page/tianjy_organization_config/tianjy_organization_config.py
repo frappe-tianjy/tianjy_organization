@@ -86,14 +86,13 @@ def delete_page(page):
 
 
 @frappe.whitelist()
-def get_members(organization_name):
+def get_members(organization_name, is_inherit):
+    filters = [
+        ['organization', '=', organization_name],
+        ['is_inherit', '=', is_inherit]
+    ]
     member_list = frappe.get_list('Tianjy Organization Member',
-                                  filters=[
-                                      ['organization', '=',
-                                       organization_name],
-                                      ['inherit_from', '=',
-                                       organization_name],
-                                  ],
+                                  filters=filters,
                                   fields=['*'],
                                   limit=0
                                   )

@@ -4,83 +4,66 @@
 			<ElButton type="primary" @click="joinOrganization">加入组织</ElButton>
 		</div>
 		<el-table :data="organizationList" border style="width: 100%" height="100%">
-			<el-table-column fixed prop="organization_doc.label" label="组织" width="180" />
-			<el-table-column prop="role_list" label="角色" >
+			<el-table-column prop="organization_doc.label" label="组织" />
+			<el-table-column prop="default" label="默认组织" >
 				<template #default="scope">
-					<span>{{ scope.row.role_list.map(i=>tt(i.role)).join(',') }}</span>
+					<div>{{ scope.row.default===1?'是':'' }}</div>
 				</template>
 			</el-table-column>
-			<el-table-column prop="visible" label="可见" width="60" >
+			<el-table-column align="center" v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" width="340">
 				<template #default="scope">
-					{{ scope.row.visible?'是':'否' }}
-				</template>
-			</el-table-column>
-			<el-table-column prop="viewable" label="可查看" width="60" >
-				<template #default="scope">
-					{{ scope.row.viewable?'是':'否' }}
-				</template>
-			</el-table-column>
-			<el-table-column prop="addible" label="可添加" width="60" >
-				<template #default="scope">
-					{{ scope.row.addible?'是':'否' }}
-				</template>
-			</el-table-column>
-			<el-table-column prop="editable" label="可编辑" width="60" >
-				<template #default="scope">
-					{{ scope.row.editable?'是':'否' }}
-				</template>
-			</el-table-column>
-			<el-table-column prop="deletable" label="可删除" width="60" >
-				<template #default="scope">
-					{{ scope.row.deletable?'是':'否' }}
-				</template>
-			</el-table-column>
-			<el-table-column prop="manageable" label="可管理" width="60" >
-				<template #default="scope">
-					{{ scope.row.manageable?'是':'否' }}
-				</template>
-			</el-table-column>
-
-			<el-table-column v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" width="180" >
-				<template #default="scope">
+					<ElButton v-if="permissions.writePermission&&scope.row.type_doc?.no_default!==1" type="primary" @click="toggleDefault(scope.row)">{{ scope.row.default===1?'取消默认':'设为默认' }}</ElButton>
 					<ElButton v-if="permissions.writePermission" type="primary" @click="editOrganization(scope.row)">编辑</ElButton>
-					<ElButton v-if="permissions.deletePermission" type="danger" @click="outOrganization(scope.row)">退出</ElButton>
+					<ElButton type="primary" @click="viewPermissions(scope.row)">权限</ElButton>
+					<ElButton type="primary" @click="viewRoles(scope.row)">角色</ElButton>
+					<ElButton v-if="permissions.deletePermission&&type==='organization'" type="danger" @click="outOrganization(scope.row)">退出</ElButton>
 				</template>
 			</el-table-column>
 		</el-table>
+		<RolesDialog
+			:visible="visible"
+			:user="user"
+			:organization="viewOrganization"
+			@cancel="visible=false"
+		></RolesDialog>
+		<PermissionsDialog
+			:visible="permissionVisible"
+			:user="user"
+			:organization="viewOrganization"
+			@cancel="permissionVisible=false"
+		></PermissionsDialog>
 	</div>
 </template>
 
 <script setup lang='ts'>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 import type { Organization, Permissions } from '../type';
+
+import RolesDialog from './RolesDialog.vue';
+import PermissionsDialog from './PermissionsDialog.vue';
+
 const tt = __;
 interface Props{
-	user:string,
-	permissions:Permissions
+	user: string,
+	permissions: Permissions
+	type: 'organization'|'inherit'
+	allOrganizationList:Organization[]
 }
 const props = defineProps<Props>();
-const organizationList = ref<Organization[]>([]);
-const loading = ref<boolean>(false);
-watch(()=>props.user, ()=>{
-	getOrganizations();
-}, {immediate:true});
-async function getOrganizations(){
-	if (!props.user){
-		return;
-	}
-	loading.value=true;
-	const res = await frappe.call<{ message: Organization[] }>({
-		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_members.tianjy_organization_members.get_organizations',
-		args:{
-			user_name:props.user,
-		},
-	});
-	organizationList.value = res?.message||[];
-	loading.value=false;
+interface Emit{
+	(e:'refresh' ):void
 }
+const emit = defineEmits<Emit>();
+const loading = ref<boolean>(false);
+const visible=ref<boolean>(false);
+const permissionVisible = ref<boolean>(false);
+const viewOrganization=ref<string>('');
+const organizationList = computed(()=>props.allOrganizationList?.filter(item=>{
+	const is_inherit = props.type === 'organization'?'0':'1';
+	return item.is_inherit===is_inherit;
+})||[]);
 
 function joinOrganization(){
 	const newDoc = frappe.model.make_new_doc_and_get_name('Tianjy Organization Member');
@@ -104,7 +87,7 @@ function outOrganization(organization:Organization){
 		loading.value=true;
 		await frappe.db.delete_doc('Tianjy Organization Member', organization.name);
 		loading.value=false;
-		getOrganizations();
+		emit('refresh');
 		ElMessage({
 			type: 'success',
 			message: '退出成功',
@@ -117,14 +100,32 @@ function outOrganization(organization:Organization){
 	});
 }
 
+function viewRoles(organization:Organization){
+	visible.value = true;
+	viewOrganization.value = organization.organization;
+}
+function viewPermissions(organization:Organization){
+	permissionVisible.value = true;
+	viewOrganization.value = organization.organization;
+}
+
+async function toggleDefault(organization:Organization){
+	await frappe.call({
+		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_members.tianjy_organization_members.toggle_default',
+		args:{
+			member_name:organization.name,
+		},
+	});
+	emit('refresh');
+}
 frappe.socketio.doctype_subscribe('Tianjy Organization Member');
 frappe.realtime.on('list_update', p => {
 	if (p.doctype !== 'Tianjy Organization Member') { return; }
-	getOrganizations();
+	emit('refresh');
 });
 
 const popstateListener = function (event:any) {
-	getOrganizations();
+	emit('refresh');
 };
 onMounted(() => {
 	window.addEventListener('popstate', popstateListener);
