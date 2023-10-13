@@ -212,10 +212,11 @@ def get_permission_query_conditions(doctype: str, user: str | None = None, *args
 		get_user_organization_doc_names_by_doctype_permission(doctype, doc_type, user) if doc_type
 		else get_user_organizations_by_doctype_permission(doctype, user)
 	)
-	if not values: return "1 = 0"
+	if not values: return f"ifnull(`tab{doctype}`.`{field}`, '') = ''"
 
+	values.add('')
 	value_sql = ', '.join([frappe.db.escape(o, percent=False) for o in values])
-	return f"`tab{doctype}`.`{field}` in ({value_sql})"
+	return f"ifnull(`tab{doctype}`.`{field}`, '') in ({value_sql})"
 
 def get_visible_query_conditions(
 	doctype: str,
