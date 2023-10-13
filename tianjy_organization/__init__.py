@@ -332,6 +332,17 @@ def _has_permission_by_organization(
 	return False
 
 
+def get_doc_organization(doc: Document) -> str | None:
+	"""获取文档的所属组织"""
+	field_info = get_organization_field(doc.doctype)
+	if not field_info: return
+	field, doc_type = field_info
+	value: Any = doc.get(field) or None
+	if not doc_type: return value
+	organization: list[str] = get_bind_organizations(doc_type, value)
+	if not organization: return
+	return organization[0]
+
 def has_permission(doc: Document, ptype, user, *args,**argv):
 	"""
 	判断是否有指定权限
