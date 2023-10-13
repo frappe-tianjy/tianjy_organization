@@ -226,6 +226,12 @@ class TianjyOrganizationMember(Document):
 
     def on_trash(self, allow_root_deletion=False):
 
+        # 删除时，连同角色数据一起删除
+        frappe.db.delete(TianjyOrganizationRole.DOCTYPE, filters=dict(
+            organization=self.organization,  # type: ignore
+            user=self.user,  # type: ignore
+        ))
+
         # 删除时，连同继承数据一起删除
         frappe.db.delete(self.DOCTYPE, filters=dict(
             inherit_from=self.organization,  # type: ignore
