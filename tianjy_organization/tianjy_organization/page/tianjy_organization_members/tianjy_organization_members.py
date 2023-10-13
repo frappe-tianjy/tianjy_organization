@@ -1,5 +1,6 @@
 import frappe
 from json import loads
+from frappe.query_builder.utils import DocType
 
 
 @frappe.whitelist()
@@ -7,7 +8,9 @@ def get_organizations(user_name):
     member_list = frappe.db.get_list('Tianjy Organization Member',
                                      filters=[['user', '=', user_name]],
                                      fields=['*'],
-                                     limit=0)
+                                     limit=0,
+                                     order_by="organization asc",
+                                     )
     role_list = frappe.db.get_list('Tianjy Organization Role',
                                    filters=[['user', '=', user_name]],
                                    fields=['*'],
@@ -18,13 +21,25 @@ def get_organizations(user_name):
                                                ['name', 'in', organization_names]],
                                            fields=['*'],
                                            limit=0)
+    type_list = frappe.db.get_list('Tianjy Organization Type',
+                                   filters=[
+                                       ['name', 'in', list(map(lambda ol: ol.type, organization_list))]],
+                                   fields=['*'],
+                                   limit=0)
     for member in member_list:
         member.role_list = list(
             filter(lambda rl: rl.organization == member.organization, role_list))
         organizations = list(
             filter(lambda ol: ol.name == member.organization, organization_list))
-        member.organization_doc = organizations[0] if len(
-            organizations) > 0 else None
+        if len(organizations) == 0:
+            continue
+        organization_doc = organizations[0]
+        member.organization_doc = organization_doc
+        types = list(
+            filter(lambda ol: ol.name == organization_doc.type, type_list))
+        if len(types) == 0:
+            continue
+        member.type_doc = types[0] if len(types) > 0 else None
     return member_list
 
 
@@ -120,3 +135,17 @@ def get_organization_members(user_name, organization_name):
         'organization_members': organization_members,
         'inherit_members': inherit_members
     }
+
+
+@frappe.whitelist()
+def toggle_default(member_name):
+    member = frappe.get_doc('Tianjy Organization Member', member_name)
+    if member.default == 0:
+        # 如果将当前设为当前组织的默认，则将其他取消默认
+        Table = DocType('Tianjy Organization Member')
+        frappe.qb.update(Table).set(Table.default, 0).where(
+            (Table.user == member.user) & (
+                Table.default == 1) & (Table.name != member.name)
+        ).run()
+    frappe.db.set_value('Tianjy Organization Member', member.name,
+                        'default', 0 if member.default == 1 else 1)

@@ -143,5 +143,27 @@ frappe.ui.form.on('Tianjy Organization Member', {
 			if (field.read_only || field.set_only_once || field.read_only_depends_on) { continue; }
 			frm.set_df_property(field.fieldname, 'read_only', disabled);
 		}
+		if (doc.organization){
+			toggle_default(frm);
+		} else {
+			hide_field('default');
+		}
+	},
+	organization(frm){
+		toggle_default(frm);
 	},
 });
+
+async function toggle_default(frm){
+	const { doc:{organization, default:isDefault} } = frm;
+	const organization_doc = await frappe.db.get_doc('Tianjy Organization', organization);
+	const type_doc = await frappe.db.get_doc('Tianjy Organization Type', organization_doc.type);
+	if (type_doc.no_default === 1){
+		hide_field('default');
+		if (isDefault===1){
+			frm.set_value('default', 0);
+		}
+	} else {
+		unhide_field('default');
+	}
+}

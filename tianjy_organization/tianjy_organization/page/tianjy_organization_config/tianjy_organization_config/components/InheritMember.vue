@@ -1,8 +1,5 @@
 <template>
 	<div class="member" v-loading="loading">
-		<div class="btn-container">
-			<ElButton v-if="permissions.createPermission" type="primary" @click="createMember">新增人员</ElButton>
-		</div>
 		<el-table :data="memberList" border style="width: 100%" height="100%">
 			<el-table-column fixed prop="user_doc.full_name" label="用户" width="180" />
 			<el-table-column prop="role" label="角色" >
@@ -41,10 +38,9 @@
 				</template>
 			</el-table-column>
 
-			<el-table-column v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" width="130" >
+			<el-table-column v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" width="60" >
 				<template #default="scope">
-					<ElButton v-if="permissions.writePermission" type="primary" @click="editMember(scope.row)">编辑</ElButton>
-					<ElButton v-if="permissions.deletePermission" type="danger" @click="deleteMember(scope.row)">删除</ElButton>
+					<ElButton v-if="permissions.writePermission" type="primary" @click="editMember(scope.row)">详情</ElButton>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -58,6 +54,7 @@ import { ElMessageBox, ElMessage } from 'element-plus';
 import type { Member, Permissions } from '../type';
 
 import {showPermissions} from './helper';
+
 interface Props{
 	organization:string
 	permissions:Permissions
@@ -80,45 +77,15 @@ async function getMembers(){
 		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_config.tianjy_organization_config.get_members',
 		args:{
 			organization_name:props.organization,
-			is_inherit:0,
+			is_inherit:1,
 		},
 	});
 	memberList.value = res?.message||[];
 	loading.value = false;
 }
 
-function createMember(){
-	const newDoc = frappe.model.make_new_doc_and_get_name('Tianjy Organization Member');
-	frappe.model.set_value('Tianjy Organization Member', newDoc, 'organization', props.organization);
-	frappe.set_route(['form', 'Tianjy Organization Member', newDoc]);
-}
-
 function editMember(member:Member){
 	frappe.set_route(['form', 'Tianjy Organization Member', member.name]);
-}
-function deleteMember(member:Member){
-	ElMessageBox.confirm(
-		'您确认删除此人员吗?',
-		'请确认',
-		{
-			confirmButtonText: '确定',
-			cancelButtonText: '取消',
-			type: 'warning',
-		},
-	).then(async () => {
-		loading.value = true;
-		await frappe.db.delete_doc('Tianjy Organization Member', member.name);
-		getMembers();
-		ElMessage({
-			type: 'success',
-			message: '删除成功',
-		});
-	}).catch(() => {
-		ElMessage({
-			type: 'info',
-			message: '取消删除',
-		});
-	});
 }
 
 frappe.socketio.doctype_subscribe('Tianjy Organization Member');

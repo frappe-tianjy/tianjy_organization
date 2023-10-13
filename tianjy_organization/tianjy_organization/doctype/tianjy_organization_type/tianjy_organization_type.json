@@ -10,7 +10,8 @@
   "root_only",
   "parent_types",
   "doc_types",
-  "no_workspace"
+  "no_workspace",
+  "no_default"
  ],
  "fields": [
   {
@@ -36,11 +37,17 @@
    "fieldname": "no_workspace",
    "fieldtype": "Check",
    "label": "No Workspace"
+  },
+  {
+   "default": "0",
+   "fieldname": "no_default",
+   "fieldtype": "Check",
+   "label": "No Default"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-10-11 13:27:18.209690",
+ "modified": "2023-10-13 15:27:23.590348",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization Type",

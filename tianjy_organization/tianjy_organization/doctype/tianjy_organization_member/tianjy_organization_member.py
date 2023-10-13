@@ -176,6 +176,7 @@ class TianjyOrganizationMember(Document):
             self.deletable = viewable
 
     def on_update(self):
+        self.update_default()
         Table = DocType(self.DOCTYPE)
         user = self.user  # type: ignore
         inherit_from = self.organization  # type: ignore
@@ -223,6 +224,17 @@ class TianjyOrganizationMember(Document):
                 1 if manageable and inheritable['manageable'] else 0,
             )
         insert_qb.run()
+
+    def update_default(self):
+        if not self.default:
+            return  # type: ignore
+
+        # 如果将当前设为当前组织的默认，则将其他取消默认
+        Table = DocType(self.DOCTYPE)
+        frappe.qb.update(Table).set(Table.default, 0).where(
+            (Table.user == self.user) & (
+                Table.default == 1) & (Table.name != self.name)
+        ).run()
 
     def on_trash(self, allow_root_deletion=False):
 

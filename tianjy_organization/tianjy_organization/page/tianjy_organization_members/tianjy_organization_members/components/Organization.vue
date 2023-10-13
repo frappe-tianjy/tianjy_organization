@@ -5,8 +5,14 @@
 		</div>
 		<el-table :data="organizationList" border style="width: 100%" height="100%">
 			<el-table-column prop="organization_doc.label" label="组织" />
-			<el-table-column align="center" v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" >
+			<el-table-column prop="default" label="默认组织" >
 				<template #default="scope">
+					<div>{{ scope.row.default===1?'是':'' }}</div>
+				</template>
+			</el-table-column>
+			<el-table-column align="center" v-if="permissions.writePermission||permissions.deletePermission" prop="address" label="操作" width="340">
+				<template #default="scope">
+					<ElButton v-if="permissions.writePermission&&scope.row.type_doc?.no_default!==1" type="primary" @click="toggleDefault(scope.row)">{{ scope.row.default===1?'取消默认':'设为默认' }}</ElButton>
 					<ElButton v-if="permissions.writePermission" type="primary" @click="editOrganization(scope.row)">编辑</ElButton>
 					<ElButton type="primary" @click="viewPermissions(scope.row)">权限</ElButton>
 					<ElButton type="primary" @click="viewRoles(scope.row)">角色</ElButton>
@@ -101,6 +107,16 @@ function viewRoles(organization:Organization){
 function viewPermissions(organization:Organization){
 	permissionVisible.value = true;
 	viewOrganization.value = organization.organization;
+}
+
+async function toggleDefault(organization:Organization){
+	await frappe.call({
+		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_members.tianjy_organization_members.toggle_default',
+		args:{
+			member_name:organization.name,
+		},
+	});
+	emit('refresh');
 }
 frappe.socketio.doctype_subscribe('Tianjy Organization Member');
 frappe.realtime.on('list_update', p => {

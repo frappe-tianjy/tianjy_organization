@@ -31,6 +31,7 @@
 						:permissions="memberPermissions"
 						:user="user.name"
 						:allOrganizationList="organizationList"
+						@refresh="getOrganizations"
 					></Organization>
 				</el-tab-pane>
 			</el-tabs>

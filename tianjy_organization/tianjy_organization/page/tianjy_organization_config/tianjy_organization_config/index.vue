@@ -22,6 +22,9 @@
 			<el-tab-pane class="tab-container" label="继承" name="inherit">
 				<Inherit v-if="organization" :organization="organization.name" :permissions="inheritPermissions"></Inherit>
 			</el-tab-pane>
+			<el-tab-pane class="tab-container" label="继承人员" name="inherit_members">
+				<InheritMember v-if="organization" :organization="organization.name" :permissions="inheritPermissions"></InheritMember>
+			</el-tab-pane>
 		</el-tabs>
 	</Page>
 </template>
@@ -37,7 +40,7 @@ import FormDetail from './components/Detail.vue';
 import Workspace from './components/Workspace.vue';
 import Member from './components/Member.vue';
 import Inherit from './components/Inherit.vue';
-
+import InheritMember from './components/InheritMember.vue';
 const organization = ref<Organization>();
 const activeName = ref<string>('info');
 const organizationMeta = ref<locals.DocType>();
