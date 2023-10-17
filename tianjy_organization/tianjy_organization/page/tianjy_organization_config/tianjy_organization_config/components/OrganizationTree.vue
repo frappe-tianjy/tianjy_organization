@@ -65,7 +65,7 @@ async function getOrganizations(){
 		method: 'tianjy_organization.tianjy_organization.page.tianjy_organization_config.tianjy_organization_config.get_organizations',
 	});
 	organizationList.value = res?.message||[];
-	if (!currentNodeKey.value){
+	if (!currentNodeKey.value||!organizationList.value.some(item=>item.name===currentNodeKey.value)){
 		currentNodeKey.value = organizationList.value[0]?.name;
 		emit('update:modelValue', organizationList.value[0]);
 	}
@@ -80,6 +80,7 @@ const organizationTree = computed(()=>{
 });
 
 function handleNodeClick(data:Organization){
+	currentNodeKey.value = data.name;
 	emit('update:modelValue', data);
 }
 
@@ -144,6 +145,7 @@ function before(
 	}
 	return true;
 }
+
 frappe.socketio.doctype_subscribe('Tianjy Organization');
 frappe.realtime.on('list_update', p => {
 	if (p.doctype !== 'Tianjy Organization') { return; }
