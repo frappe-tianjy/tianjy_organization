@@ -22,7 +22,7 @@ async function getOrganizationName() {
 	} catch {
 
 	}
-	return organization;
+	store.setCurrent('');
 }
 
 async function addProjectSelect() {
@@ -41,10 +41,8 @@ async function addProjectSelect() {
 
 	btn.href = '#';
 	btn.title = __('Switch Organization');
-	const organizationName = await getOrganizationName() || __('Select Organization');
-	btn.appendChild(document.createTextNode(organizationName));
-	btn.addEventListener('click', e => {
-		e.preventDefault();
+	const name = await getOrganizationName();
+	function selectOrganization() {
 		const dialog = new frappe.ui.Dialog({
 			title: __('Switch Organization'),
 			primary_action_label: __('Close'),
@@ -59,6 +57,29 @@ async function addProjectSelect() {
 				const ul = createTree(list);
 				p.appendChild(ul);
 			});
+
+	}
+	if (!name) {
+		let d = new frappe.ui.Dialog({
+			title: '未选择项目',
+			fields: [{ label: '您当前不在任何项目中，是否现在去选择项目?', fieldtype: 'Heading' }],
+			primary_action_label: __('Select Organization'),
+			secondary_action_label: '取消',
+			primary_action() {
+				d.hide();
+				selectOrganization();
+			},
+			secondary_action() {
+				d.hide();
+			},
+		});
+		d.show();
+	}
+	const organizationName = name || __('Select Organization');
+	btn.appendChild(document.createTextNode(organizationName));
+	btn.addEventListener('click', e => {
+		e.preventDefault();
+		selectOrganization();
 	});
 }
 
