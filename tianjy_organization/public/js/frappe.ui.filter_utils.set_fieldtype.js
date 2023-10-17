@@ -18,6 +18,9 @@ const filter_operators = [...link_filter_operators, ...multiselect_filter_operat
 
 frappe.ui.filter_utils.set_fieldtype = function set_fieldtype(df, fieldtype, condition) {
 	if (!fieldtype && (df.original_type || df.fieldtype) === 'Link' &&filter_operators.includes(condition)) {
+		if (!df.original_options) {
+			df.original_options = df.options;
+		}
 		if (df.original_type) { df.fieldtype = df.original_type; }
 		else { df.original_type = df.fieldtype; }
 
