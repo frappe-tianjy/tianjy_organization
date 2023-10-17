@@ -33,3 +33,66 @@ def get_default_workspace(organization: str = ''):
 		return doc.workspace # type: ignore
 	except DoesNotExistError:
 		...
+
+
+
+def has_sync_permission() -> bool:
+	all_roles = frappe.get_roles()
+	if 'System Manager' in all_roles: return True
+	return False
+
+@frappe.whitelist()
+def sync_roles_to_organization(organization: str | list[str] | None = None):
+
+	if not has_sync_permission(): return
+	# import frappe.db
+	if not organization:
+		filters = {}
+	elif isinstance(organization, list):
+		filters = {'name': ('in', organization)}
+	elif isinstance(organization, str):
+		filters = {'name': organization}
+	else:
+		return
+	from .tianjy_organization.doctype.tianjy_organization.tianjy_organization import TianjyOrganization
+	organizations = frappe.get_all(TianjyOrganization.DOCTYPE, filters=filters, pluck="name")
+	if not organizations: return
+	from .tianjy_organization.doctype.tianjy_organization_role.tianjy_organization_role import TianjyOrganizationRole
+	from .tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member import TianjyOrganizationMember
+
+	from frappe.query_builder.utils import DocType
+
+	frappe.db.delete(TianjyOrganizationRole.DOCTYPE, {'organization': ('in', organizations)})
+
+
+	MemberTable = DocType(TianjyOrganizationMember.DOCTYPE)
+	user_organizations = frappe.qb.from_(MemberTable).select('user', 'organization').where(
+		MemberTable.organization.isin(organizations) &
+		(MemberTable.is_inherit == 0)
+	).run(as_dict=True)
+
+	users = list(set([v.get('user') for v in user_organizations]))
+	if not users: return
+	user_roles = frappe.get_all('Has Role', filters={
+		'parenttype': 'User',
+		'parent': ('in', users),
+	}, fields=['parent', 'role'])
+	roles: dict[str, set[str]] = {}
+	for u in user_roles:
+		user = u.get('parent')
+		role = u.get('role')
+		l = roles.get(user, None)
+		if l:
+			l.add(role)
+		else:
+			roles[user] = set([role])
+	if not roles: return
+
+	q = frappe.qb.into(DocType(TianjyOrganizationRole.DOCTYPE))
+	q = q.columns('name', 'user', 'organization', 'role')
+	for v in user_organizations:
+		user = v.get('user')
+		organization = v.get('organization')
+		for role in roles.get(user, []):
+			q = q.insert(frappe.generate_hash(), user, organization, role)
+	q.run()
