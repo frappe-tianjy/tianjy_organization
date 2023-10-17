@@ -20,7 +20,8 @@ def get_organizations():
                                             limit=0,)
     organization_parent_type_list = frappe.db.get_list('Tianjy Organization Type List',
                                                        fields=["*"],
-                                                       limit=0,)
+                                                       limit=0,
+                                                       ignore_permissions=True)
     for org in organization_list:
         types = list(filter(lambda ot: org.type ==
                             ot.name, organization_types))
