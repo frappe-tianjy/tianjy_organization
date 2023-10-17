@@ -61,8 +61,8 @@ async function addProjectSelect() {
 	}
 	if (!name) {
 		let d = new frappe.ui.Dialog({
-			title: '未选择项目',
-			fields: [{ label: '您当前不在任何项目中，是否现在去选择项目?', fieldtype: 'Heading' }],
+			title: '提示',
+			fields: [{ label: '您未设置当前组织，是否现在去选择组织?', fieldtype: 'Heading' }],
 			primary_action_label: __('Select Organization'),
 			secondary_action_label: '取消',
 			primary_action() {
