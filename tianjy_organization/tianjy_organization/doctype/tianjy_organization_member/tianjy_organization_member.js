@@ -63,7 +63,14 @@ async function saveUserOrganizationRoles(user, organization, roles) {
 	await frappe.xcall('tianjy_organization.tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member.set_user_organization_roles', { user, organization, roles });
 }
 let id = 0;
-async function createEditor(frm, user, organization) {
+/**
+ *
+ * @param {string} user
+ * @param {string} organization
+ * @param {() => void} onSave
+ * @returns {Promise<void>}
+ */
+async function createEditor(user, organization, onSave) {
 	id++;
 	const k = id;
 	const [allRoles, roles] = await Promise.all([
@@ -91,20 +98,7 @@ async function createEditor(frm, user, organization) {
 		async primary_action() {
 			this.hide();
 			await saveUserOrganizationRoles(user, organization, this.get_value('roles'));
-			const roles = await frappe.db.get_list('Tianjy Organization Role',
-				{filters:{
-					'user': user, 'organization': organization},
-				fields:[
-					'user', 'organization', 'role', 'name'],
-				limit:0});
-			frm.set_value('roles', roles, false, true);
-			const role_grid = frm.fields_dict.roles.grid;
-			frm.refresh_field('roles');
-			if (
-				role_grid.data.length>role_grid.grid_pagination.page_length
-			) {
-				role_grid.wrapper.find('.grid-footer').toggle(true);
-			}
+			onSave();
 		},
 		primary_action_label: __('Update'),
 	});
@@ -127,7 +121,20 @@ async function createEditor(frm, user, organization) {
 frappe.ui.form.on('Tianjy Organization Member', {
 	role_editor(frm) {
 		const {doc} = frm;
-		createEditor(frm, doc.user, doc.organization);
+		const {user, organization } = frm.doc;
+		createEditor(user, organization, async () => {
+			const roles = await frappe.db.get_list('Tianjy Organization Role', {
+				filters:{ user: user, organization: organization},
+				fields:[ 'user', 'organization', 'role', 'name'],
+				limit:0,
+			});
+			doc.roles = roles;
+			const role_grid = frm.fields_dict.roles.grid;
+			frm.refresh_field('roles');
+			if (role_grid.data.length>role_grid.grid_pagination.page_length) {
+				role_grid.wrapper.find('.grid-footer').toggle(true);
+			}
+		});
 		frm.refresh_field('roles');
 	},
 	refresh(frm) {
