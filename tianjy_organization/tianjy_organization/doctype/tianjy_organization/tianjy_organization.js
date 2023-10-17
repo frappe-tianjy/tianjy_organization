@@ -45,6 +45,7 @@ async function typeUpdated(frm) {
 	frm.set_df_property('parent_organization', 'hidden', rootOnly);
 	frm.set_df_property('doc_type', 'hidden', !type.doc_types?.length);
 	frm.set_df_property('parent_organization', 'reqd', !rootOnly && !type.root_only);
+	frm.set_df_property('work_space', 'hidden', Boolean(type.no_workspace));
 	if (rootOnly && frm.doc.parent_organization) { frm.set_value('parent_organization', null); }
 	if ((!type.doc_types?.length || !type.doc_types.includes(frm.doc.doc_type)) && frm.doc.doc_type) {
 		frm.set_value('doc_type', null);

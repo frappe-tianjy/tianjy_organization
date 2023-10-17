@@ -1,7 +1,7 @@
 <template>
 	<Page>
 		<template #title>
-			<h3 class="title">组织设置</h3>
+			<h3 class="title">组织配置</h3>
 		</template>
 		<template #sider>
 			<OrganizationTree

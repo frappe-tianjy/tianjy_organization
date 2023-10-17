@@ -16,7 +16,7 @@
 							v-for="type in childTypes"
 							@click="createByType(type)"
 						>
-							新建{{ type.name }}
+							新建{{ tt(type.name) }}
 						</el-dropdown-item>
 					</template>
 					<el-dropdown-item
@@ -47,6 +47,7 @@ interface Emit{
 	(e:'update:modelValue', organization:any ):void
 	(e:'reload' ):void
 }
+const tt = __;
 const emit = defineEmits<Emit>();
 
 async function deleteOrganization() {
