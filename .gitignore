@@ -6,3 +6,5 @@ tags
 tianjy_organization/docs/current
 node_modules/
 tianjy_organization/public/dist
+tianjy_organization/tianjy_organization/page/tianjy_organization_config/tianjy_organization_config.js
+tianjy_organization/tianjy_organization/page/tianjy_organization_members/tianjy_organization_members.js

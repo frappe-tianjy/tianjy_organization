@@ -118,17 +118,35 @@ async function createEditor(user, organization, onSave) {
 	dialog.show();
 }
 
+const virtualRoleDoctype = 'Tianjy Organization Virtual Role';
+const virtualRoleCommon = {
+	doctype: virtualRoleDoctype,
+	parentfield: 'roles',
+	parenttype: 'Tianjy Organization Member',
+};
+frappe.provide(`locals.${virtualRoleDoctype}`);
 frappe.ui.form.on('Tianjy Organization Member', {
 	role_editor(frm) {
 		const {doc} = frm;
 		const {user, organization } = frm.doc;
 		createEditor(user, organization, async () => {
+			/** @type {{role: string, name: string}[]} */
 			const roles = await frappe.db.get_list('Tianjy Organization Role', {
 				filters:{ user: user, organization: organization},
-				fields:[ 'user', 'organization', 'role', 'name'],
+				fields:['role', 'name'],
 				limit:0,
 			});
-			doc.roles = roles;
+			for (const d of doc.roles || []) {
+				delete locals[d.doctype][d.name];
+			}
+			const parent = frm.doc.name;
+			const newList = roles.map(({role, name}, idx) => ({
+				...virtualRoleCommon, parent, name, role, idx: idx + 1,
+			}));
+			for (const doc of newList) {
+				locals[virtualRoleDoctype][doc.name] = doc;
+			}
+			doc.roles = newList;
 			const role_grid = frm.fields_dict.roles.grid;
 			frm.refresh_field('roles');
 			if (role_grid.data.length>role_grid.grid_pagination.page_length) {

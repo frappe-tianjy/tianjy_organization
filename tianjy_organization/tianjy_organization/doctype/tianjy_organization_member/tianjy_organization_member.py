@@ -143,13 +143,14 @@ class TianjyOrganizationMember(Document):
             return None
 
     def onload(self):
-        roles = frappe.db.get_values('Tianjy Organization Role',
-                                     filters={
-                                         'user': self.user, 'organization': self.organization},
-                                     fieldname=[
-                                         'user', 'organization', 'role', 'name'],
-                                     as_dict=True,
-                                     order_by='idx')
+        roles = frappe.db.get_values(
+            'Tianjy Organization Role',
+            filters={'user': self.user, 'organization': self.organization},
+            fieldname=['role', 'name'],
+            as_dict=True,
+            order_by='idx',
+        )
+        print(roles)
         self.roles = []
         for role in roles:
             self.append('roles', role)
