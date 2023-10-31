@@ -5,4 +5,5 @@ import './frappe.request.prepare';
 import './frappe.views.Workspace.prototype.append_item';
 
 import * as store from './store';
+import './patches';
 frappe.tianjyOrganization = store;
