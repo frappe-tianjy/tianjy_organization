@@ -274,9 +274,9 @@ def _get_user_permissions_in_organization(
 	def has_permission_without_if_owner_enabled(ptype):
 		return any(p.get(ptype, 0) and not p.get("if_owner", 0) for p in applicable_permissions)
 
-	applicable_permissions = list(
-		filter(is_perm_applicable, getattr(meta, "permissions", []))
-	)
+	applicable_permissions = [
+		perm for perm in getattr(meta, "permissions", []) if is_perm_applicable(perm)
+	]
 	has_if_owner_enabled = any(p.get("if_owner", 0) for p in applicable_permissions)
 
 	perms = frappe._dict(if_owner={})
