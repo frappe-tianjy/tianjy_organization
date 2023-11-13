@@ -9,6 +9,7 @@ import frappe.defaults
 import frappe.permissions
 import frappe.model.db_query
 from frappe.model.db_query import cast_name
+from frappe.query_builder.utils import DocType
 import frappe.share
 from frappe import _
 from frappe.utils import (
@@ -54,6 +55,33 @@ def prepare_filter_condition(self: frappe.model.db_query.DatabaseQuery, f):
 		value = [v for v in value if value != '~']
 		organization = frappe.get_request_header('X-Tianjy-Organization', "")
 		if organization and isinstance(organization, str): value.append(organization)
+
+	if 'module' in operator:
+		# 查询开启模块的组织
+		value = value.split(',') if isinstance(value, str) else value
+		value = [v for v in set(value) if v] if isinstance(value, (list, set, tuple)) else value
+		if value and isinstance(value, list):
+			Table = DocType('Tianjy Organization Enabled Module')
+			q = frappe.qb.from_(Table)
+			q = q.select(Table.parent)
+			q = q.where(
+				(Table.parentfield == 'modules') &
+				(Table.parenttype == TianjyOrganization.DOCTYPE) &
+				Table.module.isin(value)
+			)
+			value = q.run(pluck=True)
+			disabled = 'disabled' in operator
+			ancestors = 'ancestors' in operator
+			descendants = 'descendants' in operator
+			operator = 'organizations'
+			if ancestors:
+				operator = 'organization ancestors'
+			if descendants:
+				operator = 'organization descendants'
+			if disabled:
+				operator = f'not {operator}'
+		else:
+			value = ''
 	if not value: return '0 = 0'
 
 	filters: dict[str, Any] | None = None
