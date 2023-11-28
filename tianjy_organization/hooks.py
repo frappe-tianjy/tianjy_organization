@@ -9,7 +9,7 @@ app_license = "MIT"
 
 after_migrate = 'tianjy_organization.migrate.run'
 
-app_include_css="/assets/tianjy_organization/css/tianjy_organization.css"
+app_include_css="tianjy_organization.bundle.css"
 app_include_js="tianjy_organization.bundle.js"
 permission_query_conditions = {
 	"Tianjy Organization": "tianjy_organization.lib.get_organization_permission_query_conditions",

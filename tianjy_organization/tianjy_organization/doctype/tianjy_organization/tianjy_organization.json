@@ -21,6 +21,8 @@
   "column_break_ho7w2",
   "document",
   "section_break_3mqrm",
+  "modules",
+  "section_break_9jl5b",
   "work_space"
  ],
  "fields": [
@@ -93,13 +95,13 @@
    "fieldtype": "Link",
    "label": "\u5173\u8054\u7c7b\u578b",
    "options": "DocType"
-},
-{
- "depends_on": "eval:doc.doc_type",
- "fieldname": "document",
- "fieldtype": "Dynamic Link",
- "label": "\u5173\u8054\u6587\u6863",
- "options": "doc_type"
+  },
+  {
+   "depends_on": "eval:doc.doc_type",
+   "fieldname": "document",
+   "fieldtype": "Dynamic Link",
+   "label": "\u5173\u8054\u6587\u6863",
+   "options": "doc_type"
   },
   {
    "fieldname": "section_break_3mqrm",
@@ -111,6 +113,16 @@
   },
   {
    "fieldname": "docmenut_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "modules",
+   "fieldtype": "Table MultiSelect",
+   "label": "Modules",
+   "options": "Tianjy Organization Enabled Module"
+  },
+  {
+   "fieldname": "section_break_9jl5b",
    "fieldtype": "Section Break"
   }
  ],
@@ -139,7 +151,7 @@
   }
  ],
  "make_attachments_public": 1,
- "modified": "2023-07-21 16:37:27.761117",
+ "modified": "2023-11-13 10:27:03.608467",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization",

@@ -9,6 +9,7 @@
  "engine": "InnoDB",
  "field_order": [
   "user",
+  "designation",
   "column_break_kvlxr",
   "organization",
   "section_break_gt2eb",
@@ -170,12 +171,18 @@
    "fieldname": "default",
    "fieldtype": "Check",
    "label": "Default"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Table MultiSelect",
+   "label": "Designation",
+   "options": "Tianjy Organization Designation Multiple"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2023-10-13 13:56:24.904633",
+ "modified": "2023-11-14 15:41:57.553395",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization Member",
