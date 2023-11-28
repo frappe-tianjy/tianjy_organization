@@ -52,7 +52,7 @@ async function addProjectSelect() {
 		p.className = 'tianjy-organization-list';
 		dialog.show();
 
-		frappe.call({ method: 'tianjy_organization.viewable' })
+		frappe.call({ method: 'tianjy_organization.lib.viewable' })
 			.then(data => data?.message || []).then(list => {
 				const ul = createTree(list);
 				p.appendChild(ul);
