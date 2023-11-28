@@ -1,6 +1,8 @@
 import frappe
 from frappe.exceptions import DoesNotExistError
 
+from .tianjy_organization.doctype.tianjy_organization.tianjy_organization import TianjyOrganization
+from .tianjy_organization.doctype.tianjy_organization_member.tianjy_organization_member import TianjyOrganizationMember
 from .tianjy_organization.doctype.tianjy_organization_workspace.tianjy_organization_workspace import TianjyOrganizationWorkspace
 from . import get_user_organizations, user_organizations_sql, to_permission_type
 
@@ -96,3 +98,33 @@ def sync_roles_to_organization(organization: str | list[str] | None = None):
 		for role in roles.get(user, []):
 			q = q.insert(frappe.generate_hash(), user, organization, role)
 	q.run()
+
+
+@frappe.whitelist()
+def viewable():
+	organizations = frappe.get_all(
+		TianjyOrganization.DOCTYPE,
+		filters=dict(
+			name=('in', get_user_organizations(type="viewable"))
+		),
+		fields=["name", "parent_organization as parent", "label"],
+		order_by="lft"
+	)
+	if not organizations: return []
+	default_member = TianjyOrganizationMember.find_default(frappe.session.user)
+	print(default_member)
+	if not default_member: return organizations
+	default_organization = default_member.organization
+	for organization in organizations:
+		if organization.name == default_organization:
+			organization['default'] = 1
+			break
+	return organizations
+
+@frappe.whitelist()
+def set_default(organization):
+	member = TianjyOrganizationMember.find(frappe.session.user, organization, True)
+	if not member: return False
+	member.update({'default': 1})
+	member.save(ignore_permissions=True)
+	return True

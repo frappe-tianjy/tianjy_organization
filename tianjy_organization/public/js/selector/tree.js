@@ -5,6 +5,7 @@
  * @property {string} label
  * @property {string} name
  * @property {string} [parent]
+ * @property {1} [default]
  */
 
 import * as store from '../store';
@@ -26,66 +27,90 @@ async function setCurrent(organization) {
 	} catch {}
 	location.reload();
 }
-
 /**
  *
- * @param {TreeNode} node
- * @param {string} [organization]
+ * @param {string} organization
  */
-function create(node, organization) {
-	const { name } = node;
-	const title = document.createElement('a');
-	title.appendChild(document.createTextNode(node.label));
-	title.href = '#';
-	if (name === organization) {
-		title.classList.add('tianjy-organization-list-current');
-	}
-	title.addEventListener('click', e => {
-		e.preventDefault();
-		setCurrent(name);
-	});
-	return title;
+async function setDefault(organization) {
+	try {
+		const method = 'tianjy_organization.lib.set_default';
+		const s = await frappe.call(method, { organization });
+		return s?.message || false;
+	} catch {}
 }
 
-/**
- *
- * @param {TreeNode} node
- * @param {string} [organization]
- */
-export function createDom(node, organization) {
-	const { children } = node;
-	if (!children?.length) {
-		const head = document.createElement('li');
-		// TODO: 展开/收起 占位符
-		head.appendChild(create(node, organization));
 
-		return head;
-	}
-	const root = document.createElement('li');
-	const head = root.appendChild(document.createElement('div'));
-	const folder = root.appendChild(document.createElement('span'));
-	folder.className = 'tianjy-organization-list-tree-folder';
-	folder.addEventListener('click', e => {
-		e.preventDefault();
-		root.classList.toggle('tianjy-organization-list-tree-folded');
-	});
-	// TODO: 展开/收起
-	head.appendChild(create(node, organization));
-
-	const ul = root.appendChild(document.createElement('ul'));
-	for (const child of children) {
-		ul.appendChild(createDom(child, organization));
-	}
-	return root;
-}
 /**
  *
  * @param {TreeNode[]} list
  */
 export default function createTree(list) {
-
 	/** @type {string | undefined} */
-	const organization = store.getCurrent();
+	let organization = store.getCurrent();
+	/** @type {HTMLElement} */
+	let defaultLine;
+	/**
+	 * @param {TreeNode} node
+	 * @param {HTMLElement} head
+	 */
+	function create(node, head) {
+		const { name } = node;
+		const title = head.appendChild(document.createElement('a'));
+		title.appendChild(document.createTextNode(node.label));
+		title.href = '#';
+		if (name === organization) {
+			title.classList.add('tianjy-organization-list-current');
+		}
+		title.addEventListener('click', e => {
+			e.preventDefault();
+			setCurrent(name);
+		});
+		const button = head.appendChild(document.createElement('button'));
+		button.addEventListener('click', async e => {
+			e.preventDefault();
+			if (await setDefault(name)) {
+				defaultLine?.classList.remove('tianjy-organization-list-default');
+				defaultLine = head;
+				defaultLine.classList.add('tianjy-organization-list-default');
+			}
+		});
+		if (node.default) {
+			defaultLine = head;
+			defaultLine.classList.add('tianjy-organization-list-default');
+		}
+		return head;
+	}
+	/**
+	 *
+	 * @param {TreeNode} node
+	 */
+	function createDom(node) {
+		const { children } = node;
+		if (!children?.length) {
+			const head = document.createElement('li');
+			// TODO: 展开/收起 占位符
+			create(node, head);
+
+			return head;
+		}
+		const root = document.createElement('li');
+		const head = root.appendChild(document.createElement('div'));
+		const folder = root.appendChild(document.createElement('span'));
+		folder.className = 'tianjy-organization-list-tree-folder';
+		folder.addEventListener('click', e => {
+			e.preventDefault();
+			root.classList.toggle('tianjy-organization-list-tree-folded');
+		});
+		// TODO: 展开/收起
+		create(node, head);
+
+		const ul = root.appendChild(document.createElement('ul'));
+		for (const child of children) {
+			ul.appendChild(createDom(child));
+		}
+		return root;
+	}
+
 	/** @type {Map<string, TreeNode[]>} */
 	const map = new Map();
 	for (const node of list) {
@@ -104,7 +129,7 @@ export default function createTree(list) {
 
 	const ul = document.createElement('ul');
 	for (const node of root) {
-		ul.appendChild(createDom(node, organization));
+		ul.appendChild(createDom(node));
 	}
 	return ul;
 }

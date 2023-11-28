@@ -14,6 +14,35 @@
 	padding-inline-start: 20px;
 	position: relative;
 }
+.tianjy-organization-list button::after {
+	content: '设为默认组织';
+}
+.tianjy-organization-list button {
+	display: none;
+}
+.tianjy-organization-list :hover > button {
+	display: inline-block;
+	margin-inline-start: 8px;
+	padding: 4px;
+	line-height: 1em;
+	border: 1px solid;
+	background: none;
+	border-radius: 1em;
+	color: var(--primary);
+}
+.tianjy-organization-list .tianjy-organization-list-default > button {
+	display: none;
+}
+.tianjy-organization-list .tianjy-organization-list-default > a::after {
+	content: '默认组织';
+	display: inline-block;
+	margin-inline-start: 8px;
+	padding: 4px;
+	line-height: 1em;
+	border: 1px solid;
+	border-radius: 1em;
+	color: var(--primary);
+}
 
 .tianjy-organization-list-tree-folder {
 	position: absolute;

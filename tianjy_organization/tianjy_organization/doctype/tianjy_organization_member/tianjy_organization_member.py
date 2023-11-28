@@ -131,13 +131,22 @@ class TianjyOrganizationMember(Document):
     DOCTYPE = "Tianjy Organization Member"
 
     @classmethod
-    def find(cls, user, organization) -> 'TianjyOrganizationMember | None':
+    def find(cls, user, organization, include_inherit = False) -> 'TianjyOrganizationMember | None':
         """根据用户和组织查找"""
+        filters = dict(user=user, organization=organization)
+        if not include_inherit: filters['inherit_from'] = organization
+        try:
+            return frappe.get_last_doc(cls.DOCTYPE, filters=filters)  # type: ignore
+        except frappe.exceptions.DoesNotExistError:
+            return None
+
+    @classmethod
+    def find_default(cls, user) -> 'TianjyOrganizationMember | None':
+        """查找用户默认组织的配置"""
         try:
             return frappe.get_last_doc(cls.DOCTYPE, filters=dict(
                 user=user,
-                organization=organization,
-                inherit_from=organization,
+                default=1,
             ))  # type: ignore
         except frappe.exceptions.DoesNotExistError:
             return None
