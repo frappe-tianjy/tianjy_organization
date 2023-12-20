@@ -14,14 +14,14 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Designation",
-   "options": "Guigu Project Designation",
+   "options": "Tianjy Organization Designation",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-11-14 15:40:46.297560",
+ "modified": "2023-12-20 11:12:34.014365",
  "modified_by": "Administrator",
  "module": "Tianjy Organization",
  "name": "Tianjy Organization Designation Multiple",
