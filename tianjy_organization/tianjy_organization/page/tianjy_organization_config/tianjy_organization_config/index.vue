@@ -32,7 +32,7 @@
 <script setup lang='ts'>
 import { computed, onMounted, ref } from 'vue';
 
-import Page from '../../../../../../guigu_pm/guigu_pm/public/js/components/page/index.vue';
+import Page from '../../../components/index.vue';
 
 import OrganizationTree from './components/OrganizationTree.vue';
 import type { Organization, OrganizationType } from './type';
