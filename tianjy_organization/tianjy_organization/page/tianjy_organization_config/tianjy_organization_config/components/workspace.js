@@ -1,7 +1,6 @@
 import EditorJS from '@editorjs/editorjs';
 import Undo from 'editorjs-undo';
 
-import { blocks as guiguBlocks } from '../../../../../../../guigu/guigu/public/js/extends/patches/workspace/configDialogs';
 export default class Workspace extends frappe.views.Workspace {
 	constructor(wrapper, organization_name) {
 		super(wrapper);

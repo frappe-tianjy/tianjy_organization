@@ -43,7 +43,7 @@
 <script setup lang='ts'>
 import { computed, onMounted, ref, watch } from 'vue';
 
-import Page from '../../../../../../guigu_pm/guigu_pm/public/js/components/page/index.vue';
+import Page from '../../../components/index.vue';
 
 import Users from './components/Users.vue';
 import FormDetail from './components/Detail.vue';
