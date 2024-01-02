@@ -1,17 +1,11 @@
 <template>
-	<div v-if="hasTitle" class="title container">
+	<div class="title container">
 		<ToggleBtn v-model:expand="showSider"></ToggleBtn>
 		<slot name="title"></slot>
 	</div>
 	<div class="container guigu-container">
-		<div class="tools" v-show="hasTools&&!smallMeta">
-
-			<slot name="tools"></slot>
-		</div>
 		<div class="tools small-meta_tools" v-if="smallMeta">
-			<ToggleBtn v-if="!hasTitle" v-model:expand="showSider">
-			</ToggleBtn>
-			<div v-else></div>
+			<div></div>
 			<el-popover placement="bottom-start" :width="300" trigger="click">
 				<template #reference>
 					<el-icon size="20px">
@@ -26,13 +20,13 @@
 		<div :class="[mode === 'vertical'?'vertical':'horizon', 'main-container' ]"
 			ref="container">
 			<div :style="siderStyle"
-				:class="['sider', {onlySider:hasSider&&!hasDetail&&!hasMain}]"
-				v-show="hasSider&&!smallMeta&&showSider" ref="sider">
+				:class="sider"
+				v-show="!smallMeta&&showSider" ref="sider">
 				<slot name="sider"></slot>
 			</div>
 			<div
 				:class="[mode === 'vertical'?'vertical':'horizon', 'resizer-container' ]"
-				v-show="hasSider&&(hasDetail||hasMain)&&!smallMeta&&showSider"
+				v-show="hasDetail&&!smallMeta&&showSider"
 				ref="resizerContainer">
 				<div
 					class="resizer"
@@ -44,13 +38,12 @@
 				:class="[rightMode === 'vertical'?'vertical':'horizon','right']"
 				ref="rightContainer">
 				<div :style="mainStyle" :class="['main', {noDetail:!hasDetail}]"
-					v-show="hasMain"
 					ref="main">
 					<slot></slot>
 				</div>
 				<div
 					:class="[rightMode === 'vertical'?'vertical':'horizon', 'resizer-container' ]"
-					v-show="hasDetail&&hasMain"
+					v-show="hasDetail"
 					ref="mainResizerContainer">
 					<div
 						class="resizer"
@@ -75,7 +68,7 @@
 </template>
 <script lang="ts" setup>
 import { useSlots, computed, ref, defineProps, CSSProperties, watch } from 'vue';
-import {  Expand, MoreFilled} from '@element-plus/icons-vue';
+import { Expand, MoreFilled} from '@element-plus/icons-vue';
 
 import { useMetaQuery } from './useMetaQuery';
 import ToggleBtn from './ToggleBtn.vue';
@@ -96,13 +89,9 @@ const resizerContainer =ref<HTMLElement>();
 const mainResizerContainer = ref<HTMLElement>();
 const rightContainer = ref<HTMLElement>();
 
-const hasTitle = computed(()=>Boolean(useSlots().title));
-const hasTools = computed(()=>Boolean(useSlots().tools));
-const hasSider = computed(()=>Boolean(useSlots().sider));
-const hasMain = computed(()=>Boolean(useSlots().default));
+const hasMain = computed(()=>true);
 const hasDetail = computed(()=>Boolean(useSlots().detail));
 
-const height = computed(()=>hasTitle.value?`calc(100vh - 135px)`:`calc(100vh - 60px)`);
 const showSider = ref<boolean>(true);
 
 function dragLRController(dragEvent:PointerEvent){
@@ -216,16 +205,15 @@ function toggleSider(){
 </script>
 <style lang="less" scoped>
 .title {
-	height: 75px;
-	height: 75px;
+	height: var(--page-head-height);
+	height: var(--page-head-height);
 	display: flex;
 	align-items: center;
-	line-height: 75px;
+	line-height: var(--page-head-height);
 }
 
 .guigu-container {
-	// height: calc(100vh - 60px);
-	height: v-bind(height);
+	height: calc(100vh - var(--page-head-height) - var(--navbar-height));
 	display: flex;
 	flex-direction: column;
 	background-color: #fff;
