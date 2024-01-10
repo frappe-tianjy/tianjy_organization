@@ -53,7 +53,18 @@
 
 <script setup lang='ts'>
 import { ref, onMounted, watch, reactive} from 'vue';
-import { ElMessageBox, ElMessage, ElInput, ElButton, ElFormItem, ElSelect, ElOption, ElTable, ElTableColumn } from 'element-plus';
+import {
+	ElForm,
+	ElMessageBox,
+	ElMessage,
+	ElInput,
+	ElButton,
+	ElFormItem,
+	ElSelect,
+	ElOption,
+	ElTable,
+	ElTableColumn,
+} from 'element-plus';
 
 import type { User, Permissions } from '../type';
 
